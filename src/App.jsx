@@ -798,6 +798,33 @@ export default function App() {
           {page === "plugins"   && <Plugins currentUser={currentUser} />}
           {page === "members"   && <Members currentUser={currentUser} />}
         </div>
+
+        {/* Footer */}
+        <div style={{
+          borderTop: "1px solid #ffffff08",
+          padding: "12px 32px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "#070d1c99", flexShrink: 0,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              width: 18, height: 18, background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+              borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 10,
+            }}>⬡</div>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#475569", fontFamily: "var(--font-mono)", letterSpacing: "0.06em" }}>
+              © {new Date().getFullYear()}{" "}
+              <span style={{ color: "#60a5fa" }}>JulyDragonVN</span>
+              {" "}· SteelTeam Platform
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 10, color: "#334155", fontFamily: "var(--font-mono)" }}>v2.4.0</span>
+            <span style={{ fontSize: 10, color: "#334155" }}>·</span>
+            <span style={{ fontSize: 10, color: "#334155", fontFamily: "var(--font-mono)" }}>All rights reserved</span>
+          </div>
+        </div>
+
       </div>
     </div>
   );
