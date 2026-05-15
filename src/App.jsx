@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const USERS = [
@@ -62,7 +62,7 @@ const ROLE_COLORS = { admin: "#c084fc", lead: "#4ade80", dev: "#60a5fa" };
 const ROLE_LABELS = { admin: "Admin", lead: "Team Lead", dev: "Developer" };
 const STATUS_COLORS = { todo: "#64748b", inprogress: "#f59e0b", review: "#8b5cf6", done: "#22c55e" };
 const PRIORITY_COLORS = { low: "#22c55e", medium: "#f59e0b", high: "#ef4444", critical: "#dc2626" };
-const SEVERITY_BG = { low: "#14532d", medium: "#78350f", high: "#7f1d1d", critical: "#450a0a" };
+
 
 function getUserById(id) { return USERS.find(u => u.id === id); }
 function getProjectById(id) { return PROJECTS.find(p => p.id === id); }
@@ -109,7 +109,6 @@ function ProgressBar({ value, color = "#60a5fa", height = 4 }) {
 
 // ── MODULES ───────────────────────────────────────────────────────────────────
 function Dashboard({ currentUser }) {
-  const totalTasks = TASKS.length;
   const myTasks = TASKS.filter(t => t.assignee === currentUser.id);
   const openIssues = QUALITY_ISSUES.filter(i => i.status === "open").length;
   const recurringIssues = QUALITY_ISSUES.filter(i => i.recurring && i.status === "open").length;
@@ -209,7 +208,6 @@ function Projects({ currentUser }) {
   if (selected) {
     const proj = getProjectById(selected);
     const tasks = TASKS.filter(t => t.project === proj.id);
-    const docs = DOCS.filter(d => d.project === proj.id);
     return (
       <div>
         <button onClick={() => setSelected(null)} style={{
