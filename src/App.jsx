@@ -627,22 +627,162 @@ function Members({ currentUser }) {
   );
 }
 
+// ── PASSWORDS (demo — mỗi user có pass riêng) ────────────────────────────────
+const USER_PASSWORDS = { 1: "admin123", 2: "khoa123", 3: "hoa123", 4: "long123", 5: "mai123", 6: "tu123" };
+
+// ── LOGIN MODAL ───────────────────────────────────────────────────────────────
+function LoginModal({ targetUser, onSuccess, onClose }) {
+  const [pass, setPass] = useState("");
+  const [error, setError] = useState("");
+  const [shake, setShake] = useState(false);
+
+  function handleLogin() {
+    if (pass === USER_PASSWORDS[targetUser.id]) {
+      setError(""); onSuccess(targetUser);
+    } else {
+      setError("Mật khẩu không đúng. Vui lòng thử lại.");
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      setPass("");
+    }
+  }
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 999,
+      background: "#000000bb", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: "#0d1426", border: "1px solid #ffffff15",
+        borderRadius: 16, padding: "32px 28px", width: 340,
+        boxShadow: "0 24px 64px #000000cc",
+        animation: shake ? "shake 0.4s ease" : "slideUp 0.2s ease",
+      }}>
+        <style>{`
+          @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+          @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} 80%{transform:translateX(-4px)} }
+        `}</style>
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}>
+            <div style={{ position: "relative" }}>
+              <Avatar user={targetUser} size={56} />
+              <div style={{
+                position: "absolute", bottom: -2, right: -2,
+                width: 18, height: 18, borderRadius: "50%",
+                background: "#0d1426", border: `2px solid ${ROLE_COLORS[targetUser.role]}`,
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9,
+              }}>🔒</div>
+            </div>
+          </div>
+          <div style={{ fontWeight: 800, fontSize: 16 }}>{targetUser.name}</div>
+          <div style={{ fontSize: 12, color: ROLE_COLORS[targetUser.role], fontFamily: "var(--font-mono)", marginTop: 4 }}>
+            {ROLE_LABELS[targetUser.role]} · {targetUser.dept}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{ borderTop: "1px solid #ffffff08", marginBottom: 22 }} />
+
+        <div style={{ fontSize: 12, color: "#64748b", marginBottom: 8 }}>Mật khẩu</div>
+        <input
+          autoFocus
+          type="password"
+          value={pass}
+          onChange={e => { setPass(e.target.value); setError(""); }}
+          onKeyDown={e => e.key === "Enter" && handleLogin()}
+          placeholder="Nhập mật khẩu..."
+          style={{
+            width: "100%", padding: "10px 14px", borderRadius: 8,
+            background: "#ffffff08", border: `1px solid ${error ? "#ef4444" : "#ffffff15"}`,
+            color: "#e2e8f0", fontSize: 14, outline: "none",
+            fontFamily: "'IBM Plex Sans', sans-serif",
+            transition: "border-color 0.2s",
+          }}
+        />
+        {error && (
+          <div style={{ fontSize: 11, color: "#ef4444", marginTop: 8, display: "flex", gap: 5, alignItems: "center" }}>
+            <span>⚠</span>{error}
+          </div>
+        )}
+
+        <button onClick={handleLogin} style={{
+          width: "100%", marginTop: 16, padding: "11px 0",
+          background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
+          border: "none", borderRadius: 8, color: "#fff",
+          fontSize: 14, fontWeight: 700, cursor: "pointer",
+          transition: "opacity 0.15s",
+        }}
+          onMouseEnter={e => e.currentTarget.style.opacity = "0.85"}
+          onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        >Đăng nhập</button>
+
+        <button onClick={onClose} style={{
+          width: "100%", marginTop: 8, padding: "9px 0",
+          background: "none", border: "1px solid #ffffff10",
+          borderRadius: 8, color: "#64748b", fontSize: 13,
+          cursor: "pointer",
+        }}>Hủy</button>
+
+        <div style={{ marginTop: 18, padding: "10px 12px", background: "#ffffff05", borderRadius: 8, border: "1px solid #ffffff08" }}>
+          <div style={{ fontSize: 10, color: "#334155", fontFamily: "var(--font-mono)", marginBottom: 4 }}>DEMO — mật khẩu thử:</div>
+          <div style={{ fontSize: 10, color: "#475569", fontFamily: "var(--font-mono)" }}>
+            {targetUser.name.split(" ").slice(-1)[0].toLowerCase()}{targetUser.id === 1 ? "" : ""}
+            {" → "}<span style={{ color: "#60a5fa" }}>{USER_PASSWORDS[targetUser.id]}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: "▦" },
-  { id: "projects",  label: "Dự Án",     icon: "◈" },
-  { id: "docs",      label: "Tài Liệu",  icon: "◎" },
-  { id: "quality",   label: "Chất Lượng",icon: "△" },
-  { id: "plugins",   label: "Kho Plugin",icon: "⬡" },
-  { id: "members",   label: "Thành Viên",icon: "◉" },
+  { id: "dashboard", label: "Dashboard", icon: "▦", public: true },
+  { id: "projects",  label: "Dự Án",     icon: "◈", public: false },
+  { id: "docs",      label: "Tài Liệu",  icon: "◎", public: false },
+  { id: "quality",   label: "Chất Lượng",icon: "△", public: false },
+  { id: "plugins",   label: "Kho Plugin",icon: "⬡", public: false },
+  { id: "members",   label: "Thành Viên",icon: "◉", public: false },
 ];
 
 export default function App() {
   const [page, setPage] = useState("dashboard");
-  const [currentUser, setCurrentUser] = useState(USERS[0]);
+  const [currentUser, setCurrentUser] = useState(null);         // null = chưa đăng nhập
   const [showUserPicker, setShowUserPicker] = useState(false);
+  const [loginTarget, setLoginTarget] = useState(null);         // user đang cố đăng nhập
+  const [pendingPage, setPendingPage] = useState(null);         // trang muốn vào sau login
 
   const recurringAlert = QUALITY_ISSUES.filter(i => i.recurring && i.status === "open").length;
+
+  function handleNavClick(item) {
+    if (item.public || currentUser) {
+      setPage(item.id);
+    } else {
+      // Chưa đăng nhập → mở user picker để chọn tài khoản
+      setPendingPage(item.id);
+      setShowUserPicker(true);
+    }
+  }
+
+  function handleSelectUserToLogin(u) {
+    setShowUserPicker(false);
+    setLoginTarget(u);
+  }
+
+  function handleLoginSuccess(u) {
+    setCurrentUser(u);
+    setLoginTarget(null);
+    if (pendingPage) { setPage(pendingPage); setPendingPage(null); }
+  }
+
+  function handleLogout() {
+    setCurrentUser(null);
+    setPage("dashboard");
+    setShowUserPicker(false);
+  }
 
   return (
     <div style={{
@@ -659,6 +799,15 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
         body { background: #060c18; }
       `}</style>
+
+      {/* Login Modal */}
+      {loginTarget && (
+        <LoginModal
+          targetUser={loginTarget}
+          onSuccess={handleLoginSuccess}
+          onClose={() => { setLoginTarget(null); setPendingPage(null); }}
+        />
+      )}
 
       {/* Sidebar */}
       <div style={{
@@ -685,23 +834,24 @@ export default function App() {
         <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
           {NAV_ITEMS.map(item => {
             const isActive = page === item.id;
-            const showAlert = item.id === "quality" && recurringAlert > 0;
+            const locked = !item.public && !currentUser;
+            const showAlert = item.id === "quality" && recurringAlert > 0 && currentUser;
             return (
-              <button key={item.id} onClick={() => setPage(item.id)} style={{
+              <button key={item.id} onClick={() => handleNavClick(item)} style={{
                 width: "100%", display: "flex", alignItems: "center", gap: 10,
                 padding: "9px 12px", borderRadius: 8, marginBottom: 2, cursor: "pointer",
                 background: isActive ? "#3b82f618" : "none",
                 border: isActive ? "1px solid #3b82f644" : "1px solid transparent",
-                color: isActive ? "#60a5fa" : "#64748b",
+                color: isActive ? "#60a5fa" : locked ? "#334155" : "#64748b",
                 fontSize: 13, fontWeight: isActive ? 700 : 400,
-                textAlign: "left", transition: "all 0.15s",
-                position: "relative",
+                textAlign: "left", transition: "all 0.15s", position: "relative",
               }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#ffffff06"; }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "none"; }}
               >
                 <span style={{ fontSize: 14 }}>{item.icon}</span>
                 {item.label}
+                {locked && <span style={{ marginLeft: "auto", fontSize: 11, color: "#334155" }}>🔒</span>}
                 {showAlert && (
                   <span style={{
                     marginLeft: "auto", background: "#ef4444", color: "#fff",
@@ -714,41 +864,83 @@ export default function App() {
           })}
         </nav>
 
-        {/* User switcher */}
+        {/* User area */}
         <div style={{ padding: "12px", borderTop: "1px solid #ffffff08", position: "relative" }}>
-          <button onClick={() => setShowUserPicker(v => !v)} style={{
-            width: "100%", display: "flex", gap: 10, alignItems: "center",
-            background: "#ffffff06", border: "1px solid #ffffff10", borderRadius: 10,
-            padding: "10px 12px", cursor: "pointer",
-          }}>
-            <Avatar user={currentUser} size={30} />
-            <div style={{ flex: 1, textAlign: "left" }}>
-              <div style={{ fontSize: 12, fontWeight: 600 }}>{currentUser.name.split(" ").slice(-2).join(" ")}</div>
-              <div style={{ fontSize: 10, color: ROLE_COLORS[currentUser.role], fontFamily: "var(--font-mono)" }}>{ROLE_LABELS[currentUser.role]}</div>
-            </div>
-            <span style={{ color: "#475569", fontSize: 10 }}>▴▾</span>
-          </button>
-          {showUserPicker && (
-            <div style={{
-              position: "absolute", bottom: "100%", left: 12, right: 12, marginBottom: 6,
-              background: "#0d1426", border: "1px solid #ffffff15", borderRadius: 10,
-              overflow: "hidden", boxShadow: "0 -8px 32px #000000aa",
-            }}>
-              {USERS.map(u => (
-                <button key={u.id} onClick={() => { setCurrentUser(u); setShowUserPicker(false); }} style={{
-                  width: "100%", display: "flex", gap: 8, alignItems: "center",
-                  padding: "9px 12px", background: currentUser.id === u.id ? "#3b82f615" : "none",
-                  border: "none", cursor: "pointer", textAlign: "left",
-                  borderBottom: "1px solid #ffffff08",
+          {currentUser ? (
+            /* ── Đã đăng nhập ── */
+            <>
+              <button onClick={() => setShowUserPicker(v => !v)} style={{
+                width: "100%", display: "flex", gap: 10, alignItems: "center",
+                background: "#ffffff06", border: "1px solid #ffffff10", borderRadius: 10,
+                padding: "10px 12px", cursor: "pointer",
+              }}>
+                <Avatar user={currentUser} size={30} />
+                <div style={{ flex: 1, textAlign: "left" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{currentUser.name.split(" ").slice(-2).join(" ")}</div>
+                  <div style={{ fontSize: 10, color: ROLE_COLORS[currentUser.role], fontFamily: "var(--font-mono)" }}>{ROLE_LABELS[currentUser.role]}</div>
+                </div>
+                <span style={{ color: "#475569", fontSize: 10 }}>▴▾</span>
+              </button>
+              {showUserPicker && (
+                <div style={{
+                  position: "absolute", bottom: "100%", left: 12, right: 12, marginBottom: 6,
+                  background: "#0d1426", border: "1px solid #ffffff15", borderRadius: 10,
+                  overflow: "hidden", boxShadow: "0 -8px 32px #000000aa",
                 }}>
-                  <Avatar user={u} size={24} />
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 600 }}>{u.name.split(" ").slice(-2).join(" ")}</div>
-                    <div style={{ fontSize: 10, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</div>
+                  <div style={{ padding: "8px 12px 6px", fontSize: 10, color: "#475569", fontFamily: "var(--font-mono)", borderBottom: "1px solid #ffffff08" }}>
+                    CHUYỂN TÀI KHOẢN
                   </div>
+                  {USERS.filter(u => u.id !== currentUser.id).map(u => (
+                    <button key={u.id} onClick={() => handleSelectUserToLogin(u)} style={{
+                      width: "100%", display: "flex", gap: 8, alignItems: "center",
+                      padding: "9px 12px", background: "none",
+                      border: "none", cursor: "pointer", textAlign: "left",
+                      borderBottom: "1px solid #ffffff08",
+                    }}>
+                      <Avatar user={u} size={24} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "#e2e8f0" }}>{u.name.split(" ").slice(-2).join(" ")}</div>
+                        <div style={{ fontSize: 10, color: ROLE_COLORS[u.role] }}>{ROLE_LABELS[u.role]}</div>
+                      </div>
+                      <span style={{ fontSize: 10, color: "#334155" }}>🔒</span>
+                    </button>
+                  ))}
+                  <button onClick={handleLogout} style={{
+                    width: "100%", padding: "9px 12px", background: "none",
+                    border: "none", cursor: "pointer", textAlign: "left",
+                    color: "#ef4444", fontSize: 12, fontWeight: 600,
+                    display: "flex", alignItems: "center", gap: 8,
+                  }}>
+                    <span>⏻</span> Đăng xuất
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            /* ── Chưa đăng nhập ── */
+            <>
+              <div style={{ fontSize: 10, color: "#334155", fontFamily: "var(--font-mono)", marginBottom: 8, paddingLeft: 2 }}>
+                CHỌN TÀI KHOẢN ĐỂ ĐĂNG NHẬP
+              </div>
+              {USERS.map(u => (
+                <button key={u.id} onClick={() => setLoginTarget(u)} style={{
+                  width: "100%", display: "flex", gap: 8, alignItems: "center",
+                  padding: "8px 10px", borderRadius: 8, marginBottom: 3,
+                  background: "#ffffff04", border: "1px solid #ffffff08",
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background = "#3b82f615"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#ffffff04"}
+                >
+                  <Avatar user={u} size={26} />
+                  <div style={{ flex: 1, textAlign: "left" }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: "#cbd5e1" }}>{u.name.split(" ").slice(-2).join(" ")}</div>
+                    <div style={{ fontSize: 10, color: ROLE_COLORS[u.role], fontFamily: "var(--font-mono)" }}>{ROLE_LABELS[u.role]}</div>
+                  </div>
+                  <span style={{ fontSize: 10, color: "#334155" }}>→</span>
                 </button>
               ))}
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -771,7 +963,7 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {recurringAlert > 0 && (
+            {currentUser && recurringAlert > 0 && (
               <button onClick={() => setPage("quality")} style={{
                 background: "#7f1d1d44", border: "1px solid #ef444444",
                 borderRadius: 8, color: "#fca5a5", padding: "6px 12px",
@@ -780,6 +972,20 @@ export default function App() {
               }}>
                 ⚠ {recurringAlert} lỗi tái phát
               </button>
+            )}
+            {currentUser ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8,
+                background: "#ffffff06", border: "1px solid #ffffff10", borderRadius: 8,
+                padding: "6px 12px",
+              }}>
+                <Avatar user={currentUser} size={22} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{currentUser.name.split(" ").slice(-1)[0]}</span>
+                <Badge color={ROLE_COLORS[currentUser.role]}>{ROLE_LABELS[currentUser.role]}</Badge>
+              </div>
+            ) : (
+              <div style={{ fontSize: 12, color: "#475569", display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ color: "#334155" }}>🔒</span> Chưa đăng nhập
+              </div>
             )}
             <div style={{
               width: 36, height: 36, borderRadius: 8, background: "#ffffff08",
@@ -791,12 +997,49 @@ export default function App() {
 
         {/* Content */}
         <div style={{ flex: 1, padding: "28px 32px", overflowY: "auto" }}>
-          {page === "dashboard" && <Dashboard currentUser={currentUser} />}
-          {page === "projects"  && <Projects currentUser={currentUser} />}
-          {page === "docs"      && <Documents currentUser={currentUser} />}
-          {page === "quality"   && <Quality currentUser={currentUser} />}
-          {page === "plugins"   && <Plugins currentUser={currentUser} />}
-          {page === "members"   && <Members currentUser={currentUser} />}
+          {page === "dashboard" && <Dashboard currentUser={currentUser || USERS[0]} />}
+          {page !== "dashboard" && !currentUser && (
+            <div style={{
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              minHeight: "60vh", gap: 20, textAlign: "center",
+            }}>
+              <div style={{
+                width: 72, height: 72, borderRadius: 20,
+                background: "linear-gradient(135deg, #3b82f622, #1d4ed822)",
+                border: "1px solid #3b82f633",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32,
+              }}>🔒</div>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Yêu cầu đăng nhập</div>
+                <div style={{ fontSize: 13, color: "#64748b", maxWidth: 320, lineHeight: 1.6 }}>
+                  Bạn cần đăng nhập bằng tài khoản được cấp phép để truy cập module này.
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", maxWidth: 400 }}>
+                {USERS.map(u => (
+                  <button key={u.id} onClick={() => setLoginTarget(u)} style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+                    background: "#ffffff06", border: "1px solid #ffffff10", borderRadius: 10,
+                    cursor: "pointer", transition: "all 0.15s",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = ROLE_COLORS[u.role] + "66"}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = "#ffffff10"}
+                  >
+                    <Avatar user={u} size={28} />
+                    <div style={{ textAlign: "left" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#e2e8f0" }}>{u.name.split(" ").slice(-2).join(" ")}</div>
+                      <div style={{ fontSize: 10, color: ROLE_COLORS[u.role], fontFamily: "var(--font-mono)" }}>{ROLE_LABELS[u.role]}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {page === "projects"  && currentUser && <Projects currentUser={currentUser} />}
+          {page === "docs"      && currentUser && <Documents currentUser={currentUser} />}
+          {page === "quality"   && currentUser && <Quality currentUser={currentUser} />}
+          {page === "plugins"   && currentUser && <Plugins currentUser={currentUser} />}
+          {page === "members"   && currentUser && <Members currentUser={currentUser} />}
         </div>
 
         {/* Footer */}
