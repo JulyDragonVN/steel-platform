@@ -2,27 +2,27 @@ import { useState } from "react";
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const USERS = [
-  { id: 1, name: "Nguyễn Văn Nam", role: "admin", avatar: "NH", dept: "Management", online: true },
-  { id: 2, name: "Phạm Đình Tân", role: "lead", avatar: "MK", dept: "Management", online: true },
-  { id: 3, name: "Nguyễn Thế Văn", role: "dev", avatar: "TH", dept: "Detailing", online: false },
-  { id: 4, name: "Nguyễn Văn Huỳnh", role: "dev", avatar: "DL", dept: "Detailing", online: true },
-  { id: 5, name: "Lê Bảo Khang", role: "dev", avatar: "TM", dept: "Detailing", online: true },
-  { id: 6, name: "Lê Bảo Bình", role: "dev", avatar: "VT", dept: "Detailing", online: false },
+  { id: 1, name: "Nguyễn Văn Hưng", role: "admin", avatar: "NH", dept: "Management", online: true },
+  { id: 2, name: "Trần Minh Khoa", role: "lead", avatar: "MK", dept: "Structure", online: true },
+  { id: 3, name: "Lê Thị Hoa", role: "lead", avatar: "TH", dept: "Connection", online: false },
+  { id: 4, name: "Phạm Đức Long", role: "dev", avatar: "DL", dept: "Structure", online: true },
+  { id: 5, name: "Vũ Thanh Mai", role: "dev", avatar: "TM", dept: "Detailing", online: true },
+  { id: 6, name: "Hoàng Văn Tú", role: "dev", avatar: "VT", dept: "BIM", online: false },
 ];
 
 const PROJECTS = [
-  { id: 1, name: "Cầu Trần Hưng Đạo", code: "BD-2024-01", status: "active", progress: 68, lead: 2, team: [2,4,5], deadline: "2024-08-15", phase: "Thiết kế chi tiết", tasks: 24, done: 16 },
-  { id: 2, name: "Cầu Tứ Liên", code: "LA-2024-02", status: "active", progress: 42, lead: 3, team: [3,6], deadline: "2024-10-30", phase: "Tính toán kết cấu", tasks: 18, done: 8 },
-  { id: 3, name: "Cầu Nguyễn Trãi", code: "DN-2023-05", status: "completed", progress: 100, lead: 2, team: [2,4], deadline: "2024-03-20", phase: "Hoàn thành", tasks: 30, done: 30 },
-  { id: 4, name: "Kết cấu thép Tekla", code: "HN-2024-03", status: "planning", progress: 12, lead: 3, team: [3,5,6], deadline: "2025-02-28", phase: "Lập hồ sơ", tasks: 10, done: 1 },
+  { id: 1, name: "Nhà Máy Thép Bình Dương", code: "BD-2024-01", status: "active", progress: 68, lead: 2, team: [2,4,5], deadline: "2024-08-15", phase: "Thiết kế chi tiết", tasks: 24, done: 16 },
+  { id: 2, name: "Cầu Thép Long An", code: "LA-2024-02", status: "active", progress: 42, lead: 3, team: [3,6], deadline: "2024-10-30", phase: "Tính toán kết cấu", tasks: 18, done: 8 },
+  { id: 3, name: "Kho Lạnh Đà Nẵng", code: "DN-2023-05", status: "completed", progress: 100, lead: 2, team: [2,4], deadline: "2024-03-20", phase: "Hoàn thành", tasks: 30, done: 30 },
+  { id: 4, name: "Tháp Truyền Tải HN", code: "HN-2024-03", status: "planning", progress: 12, lead: 3, team: [3,5,6], deadline: "2025-02-28", phase: "Lập hồ sơ", tasks: 10, done: 1 },
 ];
 
 const TASKS = [
-  { id: 1, project: 1, title: "Tính toán tuyến hình cầu", assignee: 4, priority: "high", status: "inprogress", due: "2024-07-10", type: "calculation" },
-  { id: 2, project: 1, title: "Bóc tách block N3DC-5", assignee: 5, priority: "high", status: "review", due: "2024-07-12", type: "drawing" },
-  { id: 3, project: 1, title: "Kiểm tra bản vẽ 2D", assignee: 4, priority: "medium", status: "todo", due: "2024-07-20", type: "check" },
-  { id: 4, project: 2, title: "Xuất mô hình 3D", assignee: 6, priority: "high", status: "inprogress", due: "2024-07-15", type: "modeling" },
-  { id: 5, project: 2, title: "Kiểm tra mô hình 3D", assignee: 3, priority: "medium", status: "todo", due: "2024-07-25", type: "report" },
+  { id: 1, project: 1, title: "Tính toán momen uốn dầm B3", assignee: 4, priority: "high", status: "inprogress", due: "2024-07-10", type: "calculation" },
+  { id: 2, project: 1, title: "Bản vẽ chi tiết liên kết cột-dầm", assignee: 5, priority: "high", status: "review", due: "2024-07-12", type: "drawing" },
+  { id: 3, project: 1, title: "Kiểm tra biến dạng mái", assignee: 4, priority: "medium", status: "todo", due: "2024-07-20", type: "check" },
+  { id: 4, project: 2, title: "Mô hình FEM dầm chính", assignee: 6, priority: "high", status: "inprogress", due: "2024-07-15", type: "modeling" },
+  { id: 5, project: 2, title: "Báo cáo tải trọng gió", assignee: 3, priority: "medium", status: "todo", due: "2024-07-25", type: "report" },
 ];
 
 const DOCS = [
