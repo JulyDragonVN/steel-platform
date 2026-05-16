@@ -1,0 +1,443 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);font-size:14px;color:var(--color-text-primary)}
+h2{font-size:18px;font-weight:500;margin-bottom:4px}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:8px}
+.tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid transparent;cursor:pointer;font-size:13px;color:var(--color-text-secondary);background:transparent;transition:all .15s}
+.tab:hover{background:var(--color-background-secondary)}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--color-background-secondary)}
+th{padding:8px 10px;text-align:left;font-weight:500;font-size:12px;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);white-space:nowrap}
+td{padding:0;border-bottom:0.5px solid var(--color-border-tertiary);vertical-align:middle}
+td input,td select{width:100%;border:none;background:transparent;padding:7px 10px;font-size:13px;color:var(--color-text-primary);font-family:var(--font-sans);outline:none}
+td input:focus,td select:focus{background:var(--color-background-info);color:var(--color-text-info)}
+td select{cursor:pointer}
+.del-btn{padding:4px 8px;border:none;background:none;cursor:pointer;color:var(--color-text-secondary);border-radius:4px;font-size:16px;line-height:1}
+.del-btn:hover{color:var(--color-text-danger);background:var(--color-background-danger)}
+.add-btn{margin-top:10px;padding:7px 14px;border:0.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text-secondary);width:100%}
+.add-btn:hover{background:var(--color-background-secondary)}
+.gen-btn{padding:9px 22px;background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);cursor:pointer;font-size:14px;font-weight:500}
+.gen-btn:hover{opacity:.85}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500}
+.badge-admin{background:var(--color-background-secondary);color:#8b5cf6}
+.badge-lead{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-dev{background:var(--color-background-info);color:var(--color-text-info)}
+.badge-active{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-completed{background:var(--color-background-info);color:var(--color-text-info)}
+.badge-planning{background:var(--color-background-warning);color:var(--color-text-warning)}
+.badge-high{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-critical{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-medium{background:var(--color-background-warning);color:var(--color-text-warning)}
+.badge-low{background:var(--color-background-success);color:var(--color-text-success)}
+.code-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;font-family:var(--font-mono);font-size:11px;white-space:pre;overflow:auto;max-height:320px;color:var(--color-text-primary)}
+.copy-btn{padding:6px 14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;font-size:12px;color:var(--color-text-secondary)}
+.copy-btn:hover{background:var(--color-background-secondary)}
+.tip{font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;padding:8px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border-left:3px solid var(--color-border-info)}
+.row-online-true input{color:var(--color-text-success)}
+.row-online-false input{color:var(--color-text-secondary)}
+.wrap{padding:0 0 1rem}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px 18px;margin-bottom:12px}
+</style>
+
+<div class="wrap">
+<div class="top-bar">
+  <div>
+    <h2>SteelTeam — Quản lý cấu hình</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary)">Chỉnh sửa trực tiếp, nhấn "Xuất code" để lấy code cập nhật</p>
+  </div>
+  <button class="gen-btn" onclick="showExport()"><i class="ti ti-download" aria-hidden="true"></i> Xuất code App.jsx</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('users',this)"><i class="ti ti-users" aria-hidden="true"></i> Thành viên</button>
+  <button class="tab" onclick="switchTab('projects',this)"><i class="ti ti-folder" aria-hidden="true"></i> Dự án</button>
+  <button class="tab" onclick="switchTab('tasks',this)"><i class="ti ti-checklist" aria-hidden="true"></i> Tasks</button>
+  <button class="tab" onclick="switchTab('docs',this)"><i class="ti ti-file" aria-hidden="true"></i> Tài liệu</button>
+  <button class="tab" onclick="switchTab('quality',this)"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Chất lượng</button>
+  <button class="tab" onclick="switchTab('plugins',this)"><i class="ti ti-puzzle" aria-hidden="true"></i> Plugins</button>
+  <button class="tab" onclick="switchTab('config',this)"><i class="ti ti-settings" aria-hidden="true"></i> Cấu hình</button>
+  <button class="tab" onclick="switchTab('export',this)" id="tab-export"><i class="ti ti-code" aria-hidden="true"></i> Xuất code</button>
+</div>
+
+<!-- USERS -->
+<div class="panel active" id="panel-users">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Role hợp lệ: <b>admin</b>, <b>lead</b>, <b>dev</b>. Avatar: 2 chữ in hoa tên viết tắt.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table id="tbl-users">
+    <thead><tr><th>ID</th><th>Họ và tên</th><th>Role</th><th>Avatar</th><th>Phòng ban</th><th>Online</th><th>Mật khẩu</th><th></th></tr></thead>
+    <tbody id="tbody-users"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addUser()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm thành viên</button>
+</div>
+
+<!-- PROJECTS -->
+<div class="panel" id="panel-projects">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Status: <b>active</b>, <b>completed</b>, <b>planning</b>. Lead và team: nhập ID người dùng từ bảng Thành viên.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table id="tbl-projects">
+    <thead><tr><th>ID</th><th>Tên dự án</th><th>Mã</th><th>Status</th><th>Tiến độ%</th><th>Lead ID</th><th>Team IDs</th><th>Deadline</th><th>Giai đoạn</th><th>Tổng task</th><th>Xong</th><th></th></tr></thead>
+    <tbody id="tbody-projects"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addProject()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm dự án</button>
+</div>
+
+<!-- TASKS -->
+<div class="panel" id="panel-tasks">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Priority: low/medium/high/critical. Status: todo/inprogress/review/done. Type: calculation/drawing/check/modeling/report.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead><tr><th>ID</th><th>Dự án ID</th><th>Tiêu đề</th><th>Giao cho ID</th><th>Priority</th><th>Status</th><th>Hạn</th><th>Loại</th><th></th></tr></thead>
+    <tbody id="tbody-tasks"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addTask()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm task</button>
+</div>
+
+<!-- DOCS -->
+<div class="panel" id="panel-docs">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Category: standard/template/project/guide. Type: pdf/dwg/xlsx/doc. Project ID: để trống nếu không gắn với dự án cụ thể.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead><tr><th>ID</th><th>Tên tài liệu</th><th>Category</th><th>Dung lượng</th><th>Cập nhật</th><th>Dự án ID</th><th>Loại file</th><th></th></tr></thead>
+    <tbody id="tbody-docs"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addDoc()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm tài liệu</button>
+</div>
+
+<!-- QUALITY -->
+<div class="panel" id="panel-quality">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Type: error/improvement. Severity: low/medium/high/critical. Status: open/resolved/pending. Recurring: true/false.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead><tr><th>ID</th><th>Dự án ID</th><th>Mô tả lỗi</th><th>Loại</th><th>Mức độ</th><th>Status</th><th>Người báo ID</th><th>Ngày</th><th>Tag</th><th>Tái phát</th><th></th></tr></thead>
+    <tbody id="tbody-quality"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addQuality()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm vấn đề</button>
+</div>
+
+<!-- PLUGINS -->
+<div class="panel" id="panel-plugins">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Status: connected/available. Category: devops/notification/testing/cad/data.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead><tr><th>ID</th><th>Tên plugin</th><th>Mô tả</th><th>Icon</th><th>Status</th><th>Category</th><th></th></tr></thead>
+    <tbody id="tbody-plugins"></tbody>
+  </table>
+  </div>
+  <button class="add-btn" onclick="addPlugin()"><i class="ti ti-plus" aria-hidden="true"></i> Thêm plugin</button>
+</div>
+
+<!-- CONFIG -->
+<div class="panel" id="panel-config">
+  <div class="tip"><i class="ti ti-info-circle" aria-hidden="true"></i> Cấu hình chung của ứng dụng. Thay đổi tên, phiên bản, màu nền, font chữ...</div>
+  <div class="card">
+    <table id="tbl-config" style="max-width:560px">
+      <thead><tr><th>Thuộc tính</th><th>Giá trị hiện tại</th><th>Ghi chú</th></tr></thead>
+      <tbody id="tbody-config"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- EXPORT -->
+<div class="panel" id="panel-export">
+  <div class="top-bar" style="margin-bottom:10px">
+    <span style="font-size:13px;color:var(--color-text-secondary)">Sao chép đoạn code bên dưới, dán vào đầu file <code>App.jsx</code> thay thế phần DATA cũ.</span>
+    <button class="copy-btn" onclick="copyCode()"><i class="ti ti-copy" aria-hidden="true"></i> Sao chép</button>
+  </div>
+  <div class="code-box" id="code-output">Nhấn "Xuất code App.jsx" để tạo code...</div>
+</div>
+</div>
+
+<script>
+let DATA = {
+  users:[
+    {id:1,name:"Nguyễn Văn Hưng",role:"admin",avatar:"NH",dept:"Management",online:true,password:"admin123"},
+    {id:2,name:"Trần Minh Khoa",role:"lead",avatar:"MK",dept:"Structure",online:true,password:"khoa123"},
+    {id:3,name:"Lê Thị Hoa",role:"lead",avatar:"TH",dept:"Connection",online:false,password:"hoa123"},
+    {id:4,name:"Phạm Đức Long",role:"dev",avatar:"DL",dept:"Structure",online:true,password:"long123"},
+    {id:5,name:"Vũ Thanh Mai",role:"dev",avatar:"TM",dept:"Detailing",online:true,password:"mai123"},
+    {id:6,name:"Hoàng Văn Tú",role:"dev",avatar:"VT",dept:"BIM",online:false,password:"tu123"},
+  ],
+  projects:[
+    {id:1,name:"Nhà Máy Thép Bình Dương",code:"BD-2024-01",status:"active",progress:68,lead:2,team:"2,4,5",deadline:"2024-08-15",phase:"Thiết kế chi tiết",tasks:24,done:16},
+    {id:2,name:"Cầu Thép Long An",code:"LA-2024-02",status:"active",progress:42,lead:3,team:"3,6",deadline:"2024-10-30",phase:"Tính toán kết cấu",tasks:18,done:8},
+    {id:3,name:"Kho Lạnh Đà Nẵng",code:"DN-2023-05",status:"completed",progress:100,lead:2,team:"2,4",deadline:"2024-03-20",phase:"Hoàn thành",tasks:30,done:30},
+    {id:4,name:"Tháp Truyền Tải HN",code:"HN-2024-03",status:"planning",progress:12,lead:3,team:"3,5,6",deadline:"2025-02-28",phase:"Lập hồ sơ",tasks:10,done:1},
+  ],
+  tasks:[
+    {id:1,project:1,title:"Tính toán momen uốn dầm B3",assignee:4,priority:"high",status:"inprogress",due:"2024-07-10",type:"calculation"},
+    {id:2,project:1,title:"Bản vẽ chi tiết liên kết cột-dầm",assignee:5,priority:"high",status:"review",due:"2024-07-12",type:"drawing"},
+    {id:3,project:1,title:"Kiểm tra biến dạng mái",assignee:4,priority:"medium",status:"todo",due:"2024-07-20",type:"check"},
+    {id:4,project:2,title:"Mô hình FEM dầm chính",assignee:6,priority:"high",status:"inprogress",due:"2024-07-15",type:"modeling"},
+    {id:5,project:2,title:"Báo cáo tải trọng gió",assignee:3,priority:"medium",status:"todo",due:"2024-07-25",type:"report"},
+  ],
+  docs:[
+    {id:1,name:"TCVN 5575:2012 - Kết Cấu Thép",category:"standard",size:"4.2 MB",updated:"2024-01-15",project:"",type:"pdf"},
+    {id:2,name:"Template Bản Vẽ Chi Tiết v3.2",category:"template",size:"1.8 MB",updated:"2024-05-20",project:"",type:"dwg"},
+    {id:3,name:"Tính toán kết cấu BD-2024-01",category:"project",size:"2.1 MB",updated:"2024-06-28",project:"1",type:"xlsx"},
+    {id:4,name:"Hướng dẫn BIM Workflow",category:"guide",size:"3.5 MB",updated:"2024-04-10",project:"",type:"pdf"},
+    {id:5,name:"Bản vẽ cầu LA-2024-02 Rev.3",category:"project",size:"12.4 MB",updated:"2024-07-01",project:"2",type:"dwg"},
+  ],
+  quality:[
+    {id:1,project:1,title:"Sai chiều dày bản mã liên kết cột C12",type:"error",severity:"high",status:"open",reporter:5,date:"2024-07-02",tag:"connection",recurring:true},
+    {id:2,project:1,title:"Thiếu gia cố tại lỗ khoét trên dầm",type:"error",severity:"critical",status:"resolved",reporter:4,date:"2024-06-25",tag:"beam",recurring:false},
+    {id:3,project:2,title:"Đề xuất dùng HEA thay HEB để tối ưu TL",type:"improvement",severity:"low",status:"pending",reporter:6,date:"2024-07-01",tag:"optimization",recurring:false},
+    {id:4,project:1,title:"Sai chiều dày bản mã (tái phát)",type:"error",severity:"high",status:"open",reporter:4,date:"2024-07-05",tag:"connection",recurring:true},
+  ],
+  plugins:[
+    {id:1,name:"GitHub Sync",desc:"Tự động đồng bộ file thiết kế với GitHub repository",icon:"⬡",status:"connected",category:"devops"},
+    {id:2,name:"Telegram Bot",desc:"Thông báo task, deadline, lỗi qua Telegram channel",icon:"✈",status:"connected",category:"notification"},
+    {id:3,name:"API Tester",desc:"Kiểm thử API kết nối với phần mềm tính toán bên ngoài",icon:"⚡",status:"available",category:"testing"},
+    {id:4,name:"Docker Logs",desc:"Theo dõi log container tính toán FEM tự động",icon:"◈",status:"available",category:"devops"},
+    {id:5,name:"AutoCAD Bridge",desc:"Xuất bản vẽ trực tiếp sang AutoCAD/Revit",icon:"◉",status:"available",category:"cad"},
+    {id:6,name:"Excel Calc",desc:"Nhập/xuất bảng tính kết cấu từ Excel tự động",icon:"▦",status:"connected",category:"data"},
+  ],
+  config:[
+    {key:"appName",value:"SteelTeam",note:"Tên thương hiệu ở sidebar"},
+    {key:"version",value:"v2.4.0",note:"Hiển thị ở footer"},
+    {key:"copyright",value:"JulyDragonVN",note:"Tên tác giả / công ty"},
+    {key:"subtitle",value:"SteelTeam Platform",note:"Dòng phụ ở footer"},
+    {key:"bgColor",value:"#060c18",note:"Màu nền toàn app"},
+    {key:"sidebarBg",value:"#070d1c",note:"Màu nền sidebar"},
+    {key:"fontMain",value:"IBM Plex Sans",note:"Font chính"},
+    {key:"fontMono",value:"IBM Plex Mono",note:"Font mono"},
+  ]
+};
+
+function sel(opts, val, field){
+  return `<select onchange="this.closest('tr').dataset.${field}=this.value">${opts.map(o=>`<option value="${o}"${o==val?' selected':''}>${o}</option>`).join('')}</select>`;
+}
+function inp(val, field, type='text'){
+  return `<input type="${type}" value="${val}" oninput="this.closest('tr').dataset.${field}=this.value" />`;
+}
+
+function renderUsers(){
+  const tb=document.getElementById('tbody-users'); tb.innerHTML='';
+  DATA.users.forEach((u,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:40px">${inp(u.id,'id','number')}</td>
+      <td style="min-width:160px">${inp(u.name,'name')}</td>
+      <td style="width:100px">${sel(['admin','lead','dev'],u.role,'role')}</td>
+      <td style="width:70px">${inp(u.avatar,'avatar')}</td>
+      <td style="width:130px">${sel(['Management','Structure','Connection','Detailing','BIM'],u.dept,'dept')}</td>
+      <td style="width:80px">${sel(['true','false'],u.online,'online')}</td>
+      <td style="width:110px">${inp(u.password,'password')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('users',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    Object.assign(tr.dataset,{idx:i,name:u.name,role:u.role,avatar:u.avatar,dept:u.dept,online:u.online,password:u.password,id:u.id});
+    tr.addEventListener('change',()=>syncRow('users',i,tr));
+    tr.addEventListener('input',()=>syncRow('users',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderProjects(){
+  const tb=document.getElementById('tbody-projects'); tb.innerHTML='';
+  DATA.projects.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:36px">${inp(p.id,'id','number')}</td>
+      <td style="min-width:180px">${inp(p.name,'name')}</td>
+      <td style="width:110px">${inp(p.code,'code')}</td>
+      <td style="width:100px">${sel(['active','completed','planning'],p.status,'status')}</td>
+      <td style="width:72px">${inp(p.progress,'progress','number')}</td>
+      <td style="width:68px">${inp(p.lead,'lead','number')}</td>
+      <td style="width:90px">${inp(p.team,'team')}</td>
+      <td style="width:110px">${inp(p.deadline,'deadline')}</td>
+      <td style="min-width:140px">${inp(p.phase,'phase')}</td>
+      <td style="width:74px">${inp(p.tasks,'tasks','number')}</td>
+      <td style="width:60px">${inp(p.done,'done','number')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('projects',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('change',()=>syncRow('projects',i,tr));
+    tr.addEventListener('input',()=>syncRow('projects',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderTasks(){
+  const tb=document.getElementById('tbody-tasks'); tb.innerHTML='';
+  DATA.tasks.forEach((t,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:36px">${inp(t.id,'id','number')}</td>
+      <td style="width:80px">${inp(t.project,'project','number')}</td>
+      <td style="min-width:200px">${inp(t.title,'title')}</td>
+      <td style="width:90px">${inp(t.assignee,'assignee','number')}</td>
+      <td style="width:100px">${sel(['low','medium','high','critical'],t.priority,'priority')}</td>
+      <td style="width:110px">${sel(['todo','inprogress','review','done'],t.status,'status')}</td>
+      <td style="width:110px">${inp(t.due,'due')}</td>
+      <td style="width:110px">${sel(['calculation','drawing','check','modeling','report'],t.type,'type')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('tasks',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('change',()=>syncRow('tasks',i,tr));
+    tr.addEventListener('input',()=>syncRow('tasks',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderDocs(){
+  const tb=document.getElementById('tbody-docs'); tb.innerHTML='';
+  DATA.docs.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:36px">${inp(d.id,'id','number')}</td>
+      <td style="min-width:200px">${inp(d.name,'name')}</td>
+      <td style="width:100px">${sel(['standard','template','project','guide'],d.category,'category')}</td>
+      <td style="width:90px">${inp(d.size,'size')}</td>
+      <td style="width:110px">${inp(d.updated,'updated')}</td>
+      <td style="width:80px">${inp(d.project,'project')}</td>
+      <td style="width:80px">${sel(['pdf','dwg','xlsx','doc'],d.type,'type')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('docs',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('change',()=>syncRow('docs',i,tr));
+    tr.addEventListener('input',()=>syncRow('docs',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderQuality(){
+  const tb=document.getElementById('tbody-quality'); tb.innerHTML='';
+  DATA.quality.forEach((q,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:36px">${inp(q.id,'id','number')}</td>
+      <td style="width:72px">${inp(q.project,'project','number')}</td>
+      <td style="min-width:180px">${inp(q.title,'title')}</td>
+      <td style="width:110px">${sel(['error','improvement'],q.type,'type')}</td>
+      <td style="width:100px">${sel(['low','medium','high','critical'],q.severity,'severity')}</td>
+      <td style="width:100px">${sel(['open','resolved','pending'],q.status,'status')}</td>
+      <td style="width:80px">${inp(q.reporter,'reporter','number')}</td>
+      <td style="width:110px">${inp(q.date,'date')}</td>
+      <td style="width:110px">${inp(q.tag,'tag')}</td>
+      <td style="width:80px">${sel(['true','false'],q.recurring,'recurring')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('quality',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('change',()=>syncRow('quality',i,tr));
+    tr.addEventListener('input',()=>syncRow('quality',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderPlugins(){
+  const tb=document.getElementById('tbody-plugins'); tb.innerHTML='';
+  DATA.plugins.forEach((p,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:36px">${inp(p.id,'id','number')}</td>
+      <td style="min-width:130px">${inp(p.name,'name')}</td>
+      <td style="min-width:200px">${inp(p.desc,'desc')}</td>
+      <td style="width:50px">${inp(p.icon,'icon')}</td>
+      <td style="width:110px">${sel(['connected','available'],p.status,'status')}</td>
+      <td style="width:120px">${sel(['devops','notification','testing','cad','data'],p.category,'category')}</td>
+      <td style="width:36px"><button class="del-btn" onclick="delRow('plugins',${i})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>`;
+    tr.addEventListener('change',()=>syncRow('plugins',i,tr));
+    tr.addEventListener('input',()=>syncRow('plugins',i,tr));
+    tb.appendChild(tr);
+  });
+}
+
+function renderConfig(){
+  const tb=document.getElementById('tbody-config'); tb.innerHTML='';
+  DATA.config.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="width:140px;padding:7px 10px;font-family:var(--font-mono);font-size:12px;color:var(--color-text-info)">${c.key}</td>
+      <td>${inp(c.value,'value')}</td>
+      <td style="padding:7px 10px;font-size:12px;color:var(--color-text-secondary)">${c.note}</td>`;
+    tr.addEventListener('input',()=>{ DATA.config[i].value=tr.querySelector('input').value; });
+    tb.appendChild(tr);
+  });
+}
+
+function syncRow(table, i, tr){
+  const d=tr.dataset;
+  const numF=['id','progress','lead','tasks','done','project','assignee','reporter'];
+  const boolF=['online','recurring'];
+  const obj=DATA[table][i];
+  for(const sel of tr.querySelectorAll('select')){
+    const f=sel.getAttribute('onchange').match(/dataset\.(\w+)/)[1];
+    obj[f]=sel.value;
+  }
+  for(const inp of tr.querySelectorAll('input')){
+    const f=inp.getAttribute('oninput').match(/dataset\.(\w+)/)[1];
+    let v=inp.value;
+    if(numF.includes(f)) v=isNaN(+v)?v:+v;
+    if(boolF.includes(f)) v=(v==='true');
+    obj[f]=v;
+  }
+}
+
+function delRow(table, i){
+  DATA[table].splice(i,1);
+  renderAll();
+}
+
+function nextId(table){ return DATA[table].length ? Math.max(...DATA[table].map(r=>r.id))+1 : 1; }
+
+function addUser(){ DATA.users.push({id:nextId('users'),name:"Tên mới",role:"dev",avatar:"XX",dept:"Structure",online:false,password:"pass123"}); renderUsers(); }
+function addProject(){ DATA.projects.push({id:nextId('projects'),name:"Dự án mới",code:"XX-2024-01",status:"planning",progress:0,lead:1,team:"1",deadline:"2025-01-01",phase:"Lên kế hoạch",tasks:0,done:0}); renderProjects(); }
+function addTask(){ DATA.tasks.push({id:nextId('tasks'),project:1,title:"Task mới",assignee:1,priority:"medium",status:"todo",due:"2024-12-31",type:"calculation"}); renderTasks(); }
+function addDoc(){ DATA.docs.push({id:nextId('docs'),name:"Tài liệu mới",category:"project",size:"0 MB",updated:new Date().toISOString().slice(0,10),project:"",type:"pdf"}); renderDocs(); }
+function addQuality(){ DATA.quality.push({id:nextId('quality'),project:1,title:"Vấn đề mới",type:"error",severity:"medium",status:"open",reporter:1,date:new Date().toISOString().slice(0,10),tag:"general",recurring:false}); renderQuality(); }
+function addPlugin(){ DATA.plugins.push({id:nextId('plugins'),name:"Plugin mới",desc:"Mô tả plugin",icon:"◎",status:"available",category:"devops"}); renderPlugins(); }
+
+function renderAll(){ renderUsers();renderProjects();renderTasks();renderDocs();renderQuality();renderPlugins();renderConfig(); }
+
+function switchTab(id, btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+function showExport(){
+  switchTab('export', document.getElementById('tab-export'));
+  generateCode();
+}
+
+function generateCode(){
+  const u=DATA.users, p=DATA.projects, t=DATA.tasks, d=DATA.docs, q=DATA.quality, pl=DATA.plugins;
+  const cfg=Object.fromEntries(DATA.config.map(c=>[c.key,c.value]));
+  const pwd='{'+u.map(x=>`${x.id}:"${x.password}"`).join(', ')+'}';
+
+  const code=`// ── DATA — Tự động tạo từ SteelTeam Config Editor ──────────────────────────
+const USERS = ${JSON.stringify(u.map(({password,...rest})=>rest),null,2)};
+
+const PROJECTS = ${JSON.stringify(p.map(x=>({...x,team:x.team.toString().split(',').map(Number)})),null,2)};
+
+const TASKS = ${JSON.stringify(t,null,2)};
+
+const DOCS = ${JSON.stringify(d.map(x=>({...x,project:x.project===''?null:Number(x.project)})),null,2)};
+
+const QUALITY_ISSUES = ${JSON.stringify(q,null,2)};
+
+const PLUGINS = ${JSON.stringify(pl,null,2)};
+
+// ── PASSWORDS ────────────────────────────────────────────────────────────────
+const USER_PASSWORDS = ${pwd};
+
+// ── APP CONFIG ───────────────────────────────────────────────────────────────
+// appName: "${cfg.appName}"  |  version: "${cfg.version}"
+// copyright: "${cfg.copyright}"
+// bgColor: "${cfg.bgColor}"  |  sidebarBg: "${cfg.sidebarBg}"
+// Dán đoạn này vào đầu file App.jsx, thay thế phần DATA cũ.`;
+
+  document.getElementById('code-output').textContent=code;
+}
+
+function copyCode(){
+  const txt=document.getElementById('code-output').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.innerHTML='<i class="ti ti-check"></i> Đã sao chép';
+    setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Sao chép',2000);
+  });
+}
+
+renderAll();
+</script>

@@ -1,0 +1,96 @@
+:root {
+  --bg-main: #060c18;
+  --bg-sidebar: #070d1c;
+  --bg-card: #ffffff06;
+  --border-color: #ffffff10;
+  --text-primary: #e2e8f0;
+  --text-muted: #64748b;
+  --font-mono: 'IBM Plex Mono', monospace;
+  
+  /* Brand colors */
+  --color-admin: #c084fc;
+  --color-lead: #4ade80;
+  --color-dev: #60a5fa;
+  --color-primary: #3b82f6;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* SteelTeam Design System Utilities */
+.steel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+.steel-card:hover {
+  border-color: #3b82f644;
+  box-shadow: 0 8px 30px #00000040;
+}
+.steel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.steel-table th {
+  text-align: left;
+  padding: 12px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+.steel-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ffffff04;
+}
+.steel-table tr:nth-child(even) {
+  background-color: #ffffff02;
+}
+.steel-btn-primary {
+  background: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+.steel-btn-primary:hover {
+  opacity: 0.9;
+}
+.steel-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #ffffff08;
+  border: 1px solid var(--border-color);
+  color: #fff;
+  font-size: 14px;
+}
+.steel-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
