@@ -52,8 +52,8 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
     fetchData();
 
     // ── Realtime subscription ──────────────────────────────────
-    const channel = supabase
-      .channel(`realtime:${table}`)
+   const channel = supabase
+  .channel(`realtime:${table}:${Math.random()}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table },
