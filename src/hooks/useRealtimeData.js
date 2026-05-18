@@ -1,4 +1,3 @@
-// src/hooks/useRealtimeData.js
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -6,35 +5,34 @@ const IS_SUPABASE_CONFIGURED =
   import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('YOUR_PROJECT');
 
+// Lưu các channel đang dùng để tránh tạo trùng
+const activeChannels = {};
+
 export function useRealtimeData(table, fallbackData = [], options = {}) {
   const { select = '*', filter, orderBy = 'created_at' } = options;
-
   const [data,    setData]    = useState(fallbackData);
   const [loading, setLoading] = useState(IS_SUPABASE_CONFIGURED);
   const [error,   setError]   = useState(null);
-  const channelRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
+    mountedRef.current = true;
+
     if (!IS_SUPABASE_CONFIGURED) {
       setData(fallbackData);
       setLoading(false);
       return;
     }
 
-    let cancelled = false;
-
+    // Fetch dữ liệu
     async function fetchData() {
       setLoading(true);
       let query = supabase.from(table).select(select);
       if (filter) query = query.eq(filter.column, filter.value);
       if (orderBy) query = query.order(orderBy, { ascending: false });
-
       const { data: rows, error: err } = await query;
-      if (cancelled) return;
-
+      if (!mountedRef.current) return;
       if (err) {
-        console.error('[' + table + '] fetch error:', err);
-        setError(err.message);
         setData(fallbackData);
       } else {
         setData(rows || []);
@@ -44,14 +42,18 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
 
     fetchData();
 
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+    // Xóa channel cũ của bảng này nếu có
+    if (activeChannels[table]) {
+      supabase.removeChannel(activeChannels[table]);
+      delete activeChannels[table];
     }
 
+    // Tạo channel mới
+    const channelName = 'ch-' + table;
     const channel = supabase
-      .channel('rt-' + table + '-' + Date.now())
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+        if (!mountedRef.current) return;
         const { eventType, new: newRow, old: oldRow } = payload;
         setData((prev) => {
           if (eventType === 'INSERT') return [newRow, ...prev];
@@ -62,27 +64,23 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       })
       .subscribe();
 
-    channelRef.current = channel;
+    activeChannels[table] = channel;
 
     return () => {
-      cancelled = true;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
+      mountedRef.current = false;
+      if (activeChannels[table]) {
+        supabase.removeChannel(activeChannels[table]);
+        delete activeChannels[table];
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table]);
 
   async function insert(row) {
     if (!IS_SUPABASE_CONFIGURED) {
-      const newRow = { ...row, id: Date.now() };
-      setData((p) => [newRow, ...p]);
-      return newRow;
+      setData((p) => [{ ...row, id: Date.now() }, ...p]);
+      return;
     }
-    const { data: inserted, error: err } = await supabase.from(table).insert(row).select().single();
-    if (err) throw new Error(err.message);
-    return inserted;
+    await supabase.from(table).insert(row);
   }
 
   async function update(id, changes) {
@@ -90,8 +88,7 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       setData((p) => p.map((r) => (r.id === id ? { ...r, ...changes } : r)));
       return;
     }
-    const { error: err } = await supabase.from(table).update(changes).eq('id', id);
-    if (err) throw new Error(err.message);
+    await supabase.from(table).update(changes).eq('id', id);
   }
 
   async function remove(id) {
@@ -99,8 +96,7 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       setData((p) => p.filter((r) => r.id !== id));
       return;
     }
-    const { error: err } = await supabase.from(table).delete().eq('id', id);
-    if (err) throw new Error(err.message);
+    await supabase.from(table).delete().eq('id', id);
   }
 
   return { data, loading, error, insert, update, remove };
