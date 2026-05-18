@@ -1,28 +1,18 @@
 // src/hooks/useRealtimeData.js
-// Hook tổng quát: fetch + lắng nghe realtime từ một bảng Supabase.
-// Tự động fallback sang dữ liệu tĩnh nếu Supabase chưa được cấu hình.
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const IS_SUPABASE_CONFIGURED =
   import.meta.env.VITE_SUPABASE_URL &&
   !import.meta.env.VITE_SUPABASE_URL.includes('YOUR_PROJECT');
 
-/**
- * @param {string}   table        - Tên bảng Supabase (vd: 'tasks')
- * @param {Array}    fallbackData - Dữ liệu tĩnh dùng khi offline/chưa cấu hình
- * @param {object}   [options]
- * @param {string}   [options.select]  - Chuỗi select (vd: '*, users(*)')
- * @param {object}   [options.filter]  - { column, value } để lọc theo 1 cột
- * @param {string}   [options.orderBy] - Cột sắp xếp
- */
 export function useRealtimeData(table, fallbackData = [], options = {}) {
   const { select = '*', filter, orderBy = 'created_at' } = options;
 
   const [data,    setData]    = useState(fallbackData);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(IS_SUPABASE_CONFIGURED);
   const [error,   setError]   = useState(null);
+  const channelRef = useRef(null);
 
   useEffect(() => {
     if (!IS_SUPABASE_CONFIGURED) {
@@ -31,7 +21,8 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       return;
     }
 
-    // ── Fetch lần đầu ──────────────────────────────────────────
+    let cancelled = false;
+
     async function fetchData() {
       setLoading(true);
       let query = supabase.from(table).select(select);
@@ -39,10 +30,12 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       if (orderBy) query = query.order(orderBy, { ascending: false });
 
       const { data: rows, error: err } = await query;
+      if (cancelled) return;
+
       if (err) {
-        console.error(`[${table}] fetch error:`, err);
+        console.error('[' + table + '] fetch error:', err);
         setError(err.message);
-        setData(fallbackData); // fallback nếu lỗi
+        setData(fallbackData);
       } else {
         setData(rows || []);
       }
@@ -51,31 +44,36 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
 
     fetchData();
 
-    // ── Realtime subscription ──────────────────────────────────
-   const channel = supabase
-  .channel(`realtime:${table}:${Math.random()}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table },
-        (payload) => {
-          const { eventType, new: newRow, old: oldRow } = payload;
-          setData((prev) => {
-            if (eventType === 'INSERT') return [newRow, ...prev];
-            if (eventType === 'UPDATE') return prev.map((r) => (r.id === newRow.id ? newRow : r));
-            if (eventType === 'DELETE') return prev.filter((r) => r.id !== oldRow.id);
-            return prev;
-          });
-        }
-      )
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const channel = supabase
+      .channel('rt-' + table + '-' + Date.now())
+      .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+        const { eventType, new: newRow, old: oldRow } = payload;
+        setData((prev) => {
+          if (eventType === 'INSERT') return [newRow, ...prev];
+          if (eventType === 'UPDATE') return prev.map((r) => (r.id === newRow.id ? newRow : r));
+          if (eventType === 'DELETE') return prev.filter((r) => r.id !== oldRow.id);
+          return prev;
+        });
+      })
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [table, filter?.value]);
+  }, [table]);
 
-  // ── Helpers CRUD ──────────────────────────────────────────────
   async function insert(row) {
     if (!IS_SUPABASE_CONFIGURED) {
       const newRow = { ...row, id: Date.now() };
