@@ -1,8 +1,8 @@
 // src/hooks/useAuth.js
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { DEMO_PASSWORDS, FALLBACK_USERS } from '../data/constants';
-import { FALLBACK_USERS as FU } from '../data/fallback';
+import { DEMO_PASSWORDS } from '../data/constants';
+import { FALLBACK_USERS } from '../data/fallback';
 
 const IS_SUPABASE_CONFIGURED =
   import.meta.env.VITE_SUPABASE_URL &&
