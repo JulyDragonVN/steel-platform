@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Avatar, Badge } from './ui';
 import { LoginModal } from './LoginModal';
 import { ROLE_COLORS, ROLE_LABELS, NAV_ITEMS } from '../data/constants';
+import { useRealtimeData } from '../hooks/useRealtimeData';
 
-export function Layout({ children, page, setPage, currentUser, onLogin, onLogout, isSupabaseMode, recurringAlert = 0 }) {
+export function Layout({ children, page, setPage, currentUser, onLogin, onLogout, recurringAlert = 0 }) {
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [loginTarget,    setLoginTarget]    = useState(null);
   const [pendingPage,    setPendingPage]    = useState(null);
@@ -14,7 +15,6 @@ export function Layout({ children, page, setPage, currentUser, onLogin, onLogout
       setPage(item.id);
     } else {
       setPendingPage(item.id);
-      // Khi chưa đăng nhập, mở picker trực tiếp trong sidebar
       setShowUserPicker(true);
     }
   }
@@ -46,7 +46,6 @@ export function Layout({ children, page, setPage, currentUser, onLogin, onLogout
       {loginTarget && (
         <LoginModal
           targetUser={loginTarget}
-          isSupabaseMode={isSupabaseMode}
           onSuccess={handleLoginSuccess}
           onClose={() => { setLoginTarget(null); setPendingPage(null); }}
         />
@@ -206,10 +205,12 @@ export function Layout({ children, page, setPage, currentUser, onLogin, onLogout
 }
 
 // ── UserArea (phần dưới sidebar) ──────────────────────────────
-import { FALLBACK_USERS } from '../data/fallback';
-
 function UserArea({ currentUser, showUserPicker, setShowUserPicker, onSelectUser, onLogout }) {
+  const { data: users, loading } = useRealtimeData('users');
+
   if (currentUser) {
+    const otherUsers = users.filter((u) => String(u.id) !== String(currentUser.id));
+
     return (
       <div style={{ padding: '12px', borderTop: '1px solid #ffffff08', position: 'relative' }}>
         <button
@@ -241,7 +242,7 @@ function UserArea({ currentUser, showUserPicker, setShowUserPicker, onSelectUser
             <div style={{ padding: '8px 12px 6px', fontSize: 10, color: '#475569', fontFamily: 'var(--font-mono)', borderBottom: '1px solid #ffffff08' }}>
               CHUYỂN TÀI KHOẢN
             </div>
-            {FALLBACK_USERS.filter((u) => u.id !== currentUser.id).map((u) => (
+            {otherUsers.map((u) => (
               <button
                 key={u.id}
                 onClick={() => onSelectUser(u)}
@@ -275,33 +276,39 @@ function UserArea({ currentUser, showUserPicker, setShowUserPicker, onSelectUser
     );
   }
 
-  // Chưa đăng nhập
+  // Chưa đăng nhập — hiển thị danh sách users từ Supabase
   return (
     <div style={{ padding: '12px', borderTop: '1px solid #ffffff08' }}>
       <div style={{ fontSize: 10, color: '#334155', fontFamily: 'var(--font-mono)', marginBottom: 8, paddingLeft: 2 }}>
         CHỌN TÀI KHOẢN ĐỂ ĐĂNG NHẬP
       </div>
-      {FALLBACK_USERS.map((u) => (
-        <button
-          key={u.id}
-          onClick={() => onSelectUser(u)}
-          style={{
-            width: '100%', display: 'flex', gap: 8, alignItems: 'center',
-            padding: '8px 10px', borderRadius: 8, marginBottom: 3,
-            background: '#ffffff04', border: '1px solid #ffffff08',
-            cursor: 'pointer', transition: 'all 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = '#3b82f615')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff04')}
-        >
-          <Avatar user={u} size={26} />
-          <div style={{ flex: 1, textAlign: 'left' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: '#cbd5e1' }}>{u.name.split(' ').slice(-2).join(' ')}</div>
-            <div style={{ fontSize: 10, color: ROLE_COLORS[u.role], fontFamily: 'var(--font-mono)' }}>{ROLE_LABELS[u.role]}</div>
-          </div>
-          <span style={{ fontSize: 10, color: '#334155' }}>→</span>
-        </button>
-      ))}
+      {loading ? (
+        <div style={{ fontSize: 11, color: '#475569', padding: '8px 10px' }}>Đang tải...</div>
+      ) : users.length === 0 ? (
+        <div style={{ fontSize: 11, color: '#475569', padding: '8px 10px' }}>Không có tài khoản nào.</div>
+      ) : (
+        users.map((u) => (
+          <button
+            key={u.id}
+            onClick={() => onSelectUser(u)}
+            style={{
+              width: '100%', display: 'flex', gap: 8, alignItems: 'center',
+              padding: '8px 10px', borderRadius: 8, marginBottom: 3,
+              background: '#ffffff04', border: '1px solid #ffffff08',
+              cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = '#3b82f615')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff04')}
+          >
+            <Avatar user={u} size={26} />
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#cbd5e1' }}>{u.name.split(' ').slice(-2).join(' ')}</div>
+              <div style={{ fontSize: 10, color: ROLE_COLORS[u.role], fontFamily: 'var(--font-mono)' }}>{ROLE_LABELS[u.role]}</div>
+            </div>
+            <span style={{ fontSize: 10, color: '#334155' }}>→</span>
+          </button>
+        ))
+      )}
     </div>
   );
 }

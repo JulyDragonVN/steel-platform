@@ -1,15 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseReady } from '../lib/supabase';
-import { DEMO_PASSWORDS } from '../data/constants';
+import { supabase } from '../lib/supabase';
 
 export function useAuth() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]         = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseReady()) return;
-
-    setLoading(true);
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         const profile = await fetchProfile(session.user.id);
@@ -44,21 +40,10 @@ export function useAuth() {
     return data;
   }, []);
 
-  const loginDemo = useCallback((targetUser, password) => {
-    if (password !== DEMO_PASSWORDS[targetUser.id]) {
-      throw new Error('Mật khẩu không đúng. Vui lòng thử lại.');
-    }
-    setCurrentUser(targetUser);
-  }, []);
-
   const logout = useCallback(async () => {
-    if (isSupabaseReady()) await supabase.auth.signOut();
+    await supabase.auth.signOut();
     setCurrentUser(null);
   }, []);
 
-  return {
-    currentUser, loading,
-    loginWithEmail, loginDemo, logout,
-    isSupabaseMode: isSupabaseReady(),
-  };
+  return { currentUser, loading, loginWithEmail, logout };
 }

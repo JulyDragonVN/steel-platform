@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Avatar, Badge, ProgressBar, Button, Card, SectionHeader, LoadingSpinner } from '../../components/ui';
 import { ROLE_COLORS, ROLE_LABELS, STATUS_COLORS, PRIORITY_COLORS } from '../../data/constants';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
-import { FALLBACK_PROJECTS, FALLBACK_TASKS, FALLBACK_USERS } from '../../data/fallback';
 
 const STATUS_MAP = {
   active:    ['#4ade80', 'Đang chạy'],
@@ -13,9 +12,9 @@ const STATUS_MAP = {
 
 export function Projects({ currentUser }) {
   const [selected, setSelected] = useState(null);
-  const { data: projects, loading: lp } = useRealtimeData('projects', FALLBACK_PROJECTS);
-  const { data: tasks,    loading: lt } = useRealtimeData('tasks',    FALLBACK_TASKS);
-  const { data: users }                 = useRealtimeData('users',    FALLBACK_USERS);
+  const { data: projects, loading: lp } = useRealtimeData('projects');
+  const { data: tasks,    loading: lt } = useRealtimeData('tasks');
+  const { data: users }                 = useRealtimeData('users');
 
   if (lp || lt) return <LoadingSpinner />;
 

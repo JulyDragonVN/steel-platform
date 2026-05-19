@@ -1,11 +1,7 @@
 // src/components/LoginGate.jsx
 // Hiển thị khi user chưa đăng nhập và cố vào trang cần xác thực
 
-import { Avatar } from './ui';
-import { ROLE_COLORS, ROLE_LABELS } from '../data/constants';
-import { FALLBACK_USERS } from '../data/fallback';
-
-export function LoginGate({ onSelectUser }) {
+export function LoginGate({ onOpenLogin }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -23,27 +19,17 @@ export function LoginGate({ onSelectUser }) {
           Bạn cần đăng nhập bằng tài khoản được cấp phép để truy cập module này.
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 400 }}>
-        {FALLBACK_USERS.map((u) => (
-          <button
-            key={u.id}
-            onClick={() => onSelectUser(u)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px',
-              background: '#ffffff06', border: '1px solid #ffffff10', borderRadius: 10,
-              cursor: 'pointer', transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = ROLE_COLORS[u.role] + '66')}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#ffffff10')}
-          >
-            <Avatar user={u} size={28} />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0' }}>{u.name.split(' ').slice(-2).join(' ')}</div>
-              <div style={{ fontSize: 10, color: ROLE_COLORS[u.role], fontFamily: 'var(--font-mono)' }}>{ROLE_LABELS[u.role]}</div>
-            </div>
-          </button>
-        ))}
-      </div>
+      <button
+        onClick={onOpenLogin}
+        style={{
+          padding: '10px 28px',
+          background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+          border: 'none', borderRadius: 10,
+          color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+        }}
+      >
+        Đăng nhập
+      </button>
     </div>
   );
 }
