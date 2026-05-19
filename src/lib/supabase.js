@@ -1,15 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
 
-// ─── ĐIỀN THÔNG TIN SUPABASE CỦA BẠN VÀO ĐÂY ────────────────────────────────
-// Lấy tại: https://supabase.com → Project Settings → API
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://rdpuzjexxcknmmiodhft.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_aKPt7HMvD_GaWCSItBuDGw_LzTWJNg1';
-// ─────────────────────────────────────────────────────────────────────────────
+const SUPABASE_URL     = import.meta.env.VITE_SUPABASE_URL     || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  realtime: {
-    params: { eventsPerSecond: 10 },
-  },
-});
+export const supabase = createClient(
+  SUPABASE_URL     || 'https://placeholder.supabase.co',
+  SUPABASE_ANON_KEY || 'placeholder',
+);
 
-export default supabase;
+export function isSupabaseReady() {
+  return !!(
+    SUPABASE_URL &&
+    SUPABASE_URL.startsWith('https://') &&
+    !SUPABASE_URL.includes('placeholder') &&
+    SUPABASE_ANON_KEY &&
+    SUPABASE_ANON_KEY !== 'placeholder'
+  );
+}
