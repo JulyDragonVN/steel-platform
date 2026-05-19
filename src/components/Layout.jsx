@@ -4,6 +4,7 @@ import { Avatar, Badge } from './ui';
 import { LoginModal } from './LoginModal';
 import { ROLE_COLORS, ROLE_LABELS, NAV_ITEMS } from '../data/constants';
 import { useRealtimeData } from '../hooks/useRealtimeData';
+import { isSupabaseMode } from '../lib/supabase';
 
 export function Layout({ children, page, setPage, currentUser, onLogin, onLogout, recurringAlert = 0 }) {
   const [showUserPicker, setShowUserPicker] = useState(false);
@@ -31,7 +32,7 @@ export function Layout({ children, page, setPage, currentUser, onLogin, onLogout
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060c18', color: '#e2e8f0', fontFamily: "'IBM Plex Sans','Segoe UI',sans-serif", display: 'flex' }}>
+    <div style={{ minHeight: '100vh', background: '#060c18', color: '#e2e8f0', fontFamily: "Segoe UI, Roboto, 'IBM Plex Sans', sans-serif", display: 'flex' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600;700&display=swap');
         :root { --font-mono: 'IBM Plex Mono', monospace; }
@@ -48,6 +49,7 @@ export function Layout({ children, page, setPage, currentUser, onLogin, onLogout
           targetUser={loginTarget}
           onSuccess={handleLoginSuccess}
           onClose={() => { setLoginTarget(null); setPendingPage(null); }}
+          isSupabaseMode={isSupabaseMode}
         />
       )}
 
