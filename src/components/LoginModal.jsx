@@ -1,7 +1,7 @@
-// src/components/LoginModal.jsx
+﻿// src/components/LoginModal.jsx
 import { useState } from 'react';
 import { Avatar } from './ui';
-import { ROLE_COLORS, ROLE_LABELS, DEMO_PASSWORDS } from '../data/constants';
+import { ROLE_COLORS, ROLE_LABELS } from '../data/constants';
 
 export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = false }) {
   const [pass,  setPass]  = useState('');
@@ -16,7 +16,7 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
     try {
       await onSuccess({ user: targetUser, password: isSupabaseMode ? pass : pass, email });
     } catch (e) {
-      setError(e.message || 'Đăng nhập thất bại.');
+      setError(e.message || 'ÄÄƒng nháº­p tháº¥t báº¡i.');
       setShake(true);
       setTimeout(() => setShake(false), 500);
       setPass('');
@@ -58,18 +58,18 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
                 width: 18, height: 18, borderRadius: '50%',
                 background: '#0d1426', border: `2px solid ${ROLE_COLORS[targetUser.role]}`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9,
-              }}>🔒</div>
+              }}>ðŸ”’</div>
             </div>
           </div>
           <div style={{ fontWeight: 800, fontSize: 16 }}>{targetUser.name}</div>
           <div style={{ fontSize: 12, color: ROLE_COLORS[targetUser.role], fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-            {ROLE_LABELS[targetUser.role]} · {targetUser.dept}
+            {ROLE_LABELS[targetUser.role]} Â· {targetUser.dept}
           </div>
         </div>
 
         <div style={{ borderTop: '1px solid #ffffff08', marginBottom: 22 }} />
 
-        {/* Email (chỉ hiện khi Supabase mode) */}
+        {/* Email (chá»‰ hiá»‡n khi Supabase mode) */}
         {isSupabaseMode && (
           <>
             <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Email</div>
@@ -84,7 +84,7 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
         )}
 
         <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, marginTop: isSupabaseMode ? 14 : 0 }}>
-          Mật khẩu
+          Máº­t kháº©u
         </div>
         <input
           autoFocus
@@ -92,12 +92,12 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
           value={pass}
           onChange={(e) => { setPass(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-          placeholder="Nhập mật khẩu..."
+          placeholder="Nháº­p máº­t kháº©u..."
           style={inputStyle(!!error)}
         />
         {error && (
           <div style={{ fontSize: 11, color: '#ef4444', marginTop: 8, display: 'flex', gap: 5, alignItems: 'center' }}>
-            <span>⚠</span>{error}
+            <span>âš </span>{error}
           </div>
         )}
 
@@ -111,7 +111,7 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
             fontSize: 14, fontWeight: 700, cursor: busy ? 'not-allowed' : 'pointer',
           }}
         >
-          {busy ? 'Đang đăng nhập...' : 'Đăng nhập'}
+          {busy ? 'Äang Ä‘Äƒng nháº­p...' : 'ÄÄƒng nháº­p'}
         </button>
 
         <button
@@ -122,15 +122,15 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
             borderRadius: 8, color: '#64748b', fontSize: 13, cursor: 'pointer',
           }}
         >
-          Hủy
+          Há»§y
         </button>
 
-        {/* Demo hint (chỉ hiện khi không phải Supabase mode) */}
+        {/* Demo hint (chá»‰ hiá»‡n khi khÃ´ng pháº£i Supabase mode) */}
         {!isSupabaseMode && (
           <div style={{ marginTop: 18, padding: '10px 12px', background: '#ffffff05', borderRadius: 8, border: '1px solid #ffffff08' }}>
             <div style={{ fontSize: 10, color: '#334155', fontFamily: 'var(--font-mono)', marginBottom: 4 }}>DEMO — mật khẩu thử:</div>
             <div style={{ fontSize: 10, color: '#475569', fontFamily: 'var(--font-mono)' }}>
-              {'→ '}<span style={{ color: '#60a5fa' }}>{DEMO_PASSWORDS[targetUser.id]}</span>
+              {'→ '}<span style={{ color: '#60a5fa' }}>Mật khẩu demo được ghi trong README</span>
             </div>
           </div>
         )}
