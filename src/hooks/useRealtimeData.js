@@ -1,103 +1,114 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
-const IS_SUPABASE_CONFIGURED =
-  import.meta.env.VITE_SUPABASE_URL &&
-  !import.meta.env.VITE_SUPABASE_URL.includes('YOUR_PROJECT');
-
-// Lưu các channel đang dùng để tránh tạo trùng
-const activeChannels = {};
+function isSupabaseReady() {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  return !!(url && url.startsWith('https://') && !url.includes('YOUR_PROJECT'));
+}
 
 export function useRealtimeData(table, fallbackData = [], options = {}) {
   const { select = '*', filter, orderBy = 'created_at' } = options;
+  const ready = isSupabaseReady();
+
   const [data,    setData]    = useState(fallbackData);
-  const [loading, setLoading] = useState(IS_SUPABASE_CONFIGURED);
-  const [error,   setError]   = useState(null);
-  const mountedRef = useRef(true);
+  const [loading, setLoading] = useState(ready);
+  const fetchedRef  = useRef(false);
+  const channelRef  = useRef(null);
 
   useEffect(() => {
-    mountedRef.current = true;
-
-    if (!IS_SUPABASE_CONFIGURED) {
+    // Không dùng Supabase — dùng fallback ngay
+    if (!ready) {
       setData(fallbackData);
       setLoading(false);
       return;
     }
 
-    // Fetch dữ liệu
-    async function fetchData() {
-      setLoading(true);
-      let query = supabase.from(table).select(select);
-      if (filter) query = query.eq(filter.column, filter.value);
-      if (orderBy) query = query.order(orderBy, { ascending: false });
-      const { data: rows, error: err } = await query;
-      if (!mountedRef.current) return;
-      if (err) {
-        setData(fallbackData);
-      } else {
-        setData(rows || []);
+    // Tránh fetch 2 lần do Strict Mode
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
+    let alive = true;
+
+    // 1. Fetch dữ liệu 1 lần
+    (async () => {
+      try {
+        let query = supabase.from(table).select(select);
+        if (filter)  query = query.eq(filter.column, filter.value);
+        if (orderBy) query = query.order(orderBy, { ascending: false });
+
+        const { data: rows, error } = await query;
+        if (!alive) return;
+
+        if (error) {
+          console.warn('[' + table + ']', error.message);
+          setData(fallbackData);
+        } else {
+          setData(rows ?? fallbackData);
+        }
+      } catch (e) {
+        if (alive) setData(fallbackData);
+      } finally {
+        if (alive) setLoading(false);
       }
-      setLoading(false);
+    })();
+
+    // 2. Realtime — chỉ subscribe 1 lần, tên channel cố định theo bảng
+    const chName = 'sub-' + table;
+
+    // Xóa channel cũ nếu còn sót
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
     }
 
-    fetchData();
-
-    // Xóa channel cũ của bảng này nếu có
-    if (activeChannels[table]) {
-      supabase.removeChannel(activeChannels[table]);
-      delete activeChannels[table];
+    try {
+      const ch = supabase
+        .channel(chName)
+        .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+          if (!alive) return;
+          setData((prev) => {
+            const { eventType, new: n, old: o } = payload;
+            if (eventType === 'INSERT') return [n, ...prev];
+            if (eventType === 'UPDATE') return prev.map((r) => (r.id === n.id ? n : r));
+            if (eventType === 'DELETE') return prev.filter((r) => r.id !== o.id);
+            return prev;
+          });
+        })
+        .subscribe();
+      channelRef.current = ch;
+    } catch (e) {
+      // Realtime lỗi không ảnh hưởng đến dữ liệu đã fetch
+      console.warn('[realtime ' + table + ']', e.message);
     }
-
-    // Tạo channel mới
-    const channelName = 'ch-' + table;
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
-        if (!mountedRef.current) return;
-        const { eventType, new: newRow, old: oldRow } = payload;
-        setData((prev) => {
-          if (eventType === 'INSERT') return [newRow, ...prev];
-          if (eventType === 'UPDATE') return prev.map((r) => (r.id === newRow.id ? newRow : r));
-          if (eventType === 'DELETE') return prev.filter((r) => r.id !== oldRow.id);
-          return prev;
-        });
-      })
-      .subscribe();
-
-    activeChannels[table] = channel;
 
     return () => {
-      mountedRef.current = false;
-      if (activeChannels[table]) {
-        supabase.removeChannel(activeChannels[table]);
-        delete activeChannels[table];
+      alive = false;
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
-  }, [table]);
+  }, []); // chạy đúng 1 lần
 
+  // ── CRUD ──────────────────────────────────────────────────────
   async function insert(row) {
-    if (!IS_SUPABASE_CONFIGURED) {
-      setData((p) => [{ ...row, id: Date.now() }, ...p]);
-      return;
-    }
-    await supabase.from(table).insert(row);
+    if (!ready) { setData((p) => [{ ...row, id: Date.now() }, ...p]); return; }
+    const { data: r, error } = await supabase.from(table).insert(row).select().single();
+    if (error) throw error;
+    return r;
   }
 
   async function update(id, changes) {
-    if (!IS_SUPABASE_CONFIGURED) {
-      setData((p) => p.map((r) => (r.id === id ? { ...r, ...changes } : r)));
-      return;
-    }
-    await supabase.from(table).update(changes).eq('id', id);
+    if (!ready) { setData((p) => p.map((r) => (r.id === id ? { ...r, ...changes } : r))); return; }
+    const { error } = await supabase.from(table).update(changes).eq('id', id);
+    if (error) throw error;
   }
 
   async function remove(id) {
-    if (!IS_SUPABASE_CONFIGURED) {
-      setData((p) => p.filter((r) => r.id !== id));
-      return;
-    }
-    await supabase.from(table).delete().eq('id', id);
+    if (!ready) { setData((p) => p.filter((r) => r.id !== id)); return; }
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (error) throw error;
   }
 
-  return { data, loading, error, insert, update, remove };
+  return { data, loading, insert, update, remove };
 }
