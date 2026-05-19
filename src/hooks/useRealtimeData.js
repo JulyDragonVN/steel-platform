@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 function isSupabaseReady() {
@@ -12,24 +12,17 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
 
   const [data,    setData]    = useState(fallbackData);
   const [loading, setLoading] = useState(ready);
-  const fetchedRef  = useRef(false);
-  const channelRef  = useRef(null);
 
   useEffect(() => {
-    // Không dùng Supabase — dùng fallback ngay
     if (!ready) {
       setData(fallbackData);
       setLoading(false);
       return;
     }
 
-    // Tránh fetch 2 lần do Strict Mode
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-
     let alive = true;
+    setLoading(true);
 
-    // 1. Fetch dữ liệu 1 lần
     (async () => {
       try {
         let query = supabase.from(table).select(select);
@@ -43,7 +36,7 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
           console.warn('[' + table + ']', error.message);
           setData(fallbackData);
         } else {
-          setData(rows ?? fallbackData);
+          setData(rows && rows.length > 0 ? rows : fallbackData);
         }
       } catch (e) {
         if (alive) setData(fallbackData);
@@ -52,49 +45,14 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
       }
     })();
 
-    // 2. Realtime — chỉ subscribe 1 lần, tên channel cố định theo bảng
-    const chName = 'sub-' + table;
+    return () => { alive = false; };
+  }, [table]);
 
-    // Xóa channel cũ nếu còn sót
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
-    try {
-      const ch = supabase
-        .channel(chName)
-        .on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
-          if (!alive) return;
-          setData((prev) => {
-            const { eventType, new: n, old: o } = payload;
-            if (eventType === 'INSERT') return [n, ...prev];
-            if (eventType === 'UPDATE') return prev.map((r) => (r.id === n.id ? n : r));
-            if (eventType === 'DELETE') return prev.filter((r) => r.id !== o.id);
-            return prev;
-          });
-        })
-        .subscribe();
-      channelRef.current = ch;
-    } catch (e) {
-      // Realtime lỗi không ảnh hưởng đến dữ liệu đã fetch
-      console.warn('[realtime ' + table + ']', e.message);
-    }
-
-    return () => {
-      alive = false;
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, []); // chạy đúng 1 lần
-
-  // ── CRUD ──────────────────────────────────────────────────────
   async function insert(row) {
     if (!ready) { setData((p) => [{ ...row, id: Date.now() }, ...p]); return; }
     const { data: r, error } = await supabase.from(table).insert(row).select().single();
     if (error) throw error;
+    setData((p) => [r, ...p]);
     return r;
   }
 
@@ -102,12 +60,14 @@ export function useRealtimeData(table, fallbackData = [], options = {}) {
     if (!ready) { setData((p) => p.map((r) => (r.id === id ? { ...r, ...changes } : r))); return; }
     const { error } = await supabase.from(table).update(changes).eq('id', id);
     if (error) throw error;
+    setData((p) => p.map((r) => (r.id === id ? { ...r, ...changes } : r)));
   }
 
   async function remove(id) {
     if (!ready) { setData((p) => p.filter((r) => r.id !== id)); return; }
     const { error } = await supabase.from(table).delete().eq('id', id);
     if (error) throw error;
+    setData((p) => p.filter((r) => r.id !== id));
   }
 
   return { data, loading, insert, update, remove };
