@@ -7,17 +7,26 @@ export function useRealtimeData(table, options = {}) {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
 
+  // Chuyển filter thành chuỗi JSON để làm dependency an toàn cho useEffect
+  const filterString = filter ? JSON.stringify(filter) : '';
+
   useEffect(() => {
     let alive = true;
+    
+    // 1. Khởi tạo Channel riêng biệt
+    const channel = supabase.channel(`realtime_${table}_${Date.now()}`);
 
     async function fetchData() {
+      if (!alive) return;
       setLoading(true);
       setError(null);
       try {
         let q = supabase.from(table).select(select);
         if (filter)  q = q.eq(filter.column, filter.value);
         if (orderBy) q = q.order(orderBy, { ascending: false });
+        
         const { data: rows, error: err } = await q;
+        
         if (!alive) return;
         if (err) throw err;
         setData(rows ?? []);
@@ -28,20 +37,33 @@ export function useRealtimeData(table, options = {}) {
       }
     }
 
+    // Chạy lấy dữ liệu lần đầu
     fetchData();
 
-    const channel = supabase
-      .channel(`realtime:${table}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+    // 2. Thiết lập lắng nghe sự kiện TRƯỚC
+    channel.on(
+      'postgres_changes', 
+      { event: '*', schema: 'public', table: table }, 
+      () => {
         if (alive) fetchData();
-      })
-      .subscribe();
+      }
+    );
 
+    // 3. Cuối cùng mới kích hoạt kết nối .subscribe()
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log(`Realtime connected to table: ${table}`);
+      }
+    });
+
+    // 4. Hàm dọn dẹp bắt buộc để tránh trùng lặp kênh lắng nghe
     return () => {
       alive = false;
       supabase.removeChannel(channel);
     };
-  }, [table]);
+    
+    // Thêm các dependency chuẩn để useEffect biết chính xác khi nào cần chạy lại
+  }, [table, select, filterString, orderBy]);
 
   async function insert(row) {
     const { data: r, error: err } = await supabase.from(table).insert(row).select().single();
