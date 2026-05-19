@@ -1,5 +1,5 @@
 // src/modules/dashboard/Dashboard.jsx
-import { Avatar, ProgressBar, Badge, SectionHeader, Card, LoadingSpinner } from '../../components/ui';
+import { Avatar, ProgressBar, Badge, SectionHeader, Card } from '../../components/ui';
 import { ROLE_COLORS, STATUS_COLORS, PRIORITY_COLORS } from '../../data/constants';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
 import {
@@ -8,24 +8,23 @@ import {
 } from '../../data/fallback';
 
 export function Dashboard({ currentUser }) {
-  const { data: projects,      loading: lp } = useRealtimeData('projects',       FALLBACK_PROJECTS);
-  const { data: tasks,         loading: lt } = useRealtimeData('tasks',           FALLBACK_TASKS);
-  const { data: qualityIssues, loading: lq } = useRealtimeData('quality_issues',  FALLBACK_QUALITY_ISSUES);
-  const { data: activity,      loading: la } = useRealtimeData('activity',        FALLBACK_ACTIVITY);
-  const { data: users }                      = useRealtimeData('users',           FALLBACK_USERS);
+  const { data: projects      } = useRealtimeData('projects',      FALLBACK_PROJECTS);
+  const { data: tasks         } = useRealtimeData('tasks',         FALLBACK_TASKS);
+  const { data: qualityIssues } = useRealtimeData('quality_issues',FALLBACK_QUALITY_ISSUES);
+  const { data: activity      } = useRealtimeData('activity',      FALLBACK_ACTIVITY);
+  const { data: users         } = useRealtimeData('users',         FALLBACK_USERS);
 
-  if (lp || lt || lq || la) return <LoadingSpinner />;
-
-  const getUserById  = (id) => users.find((u) => String(u.id) === String(id));
-  const myTasks      = tasks.filter((t) => String(t.assignee_id) === String(currentUser.id));
-  const openIssues   = qualityIssues.filter((i) => i.status === 'open').length;
+  // KHÔNG chờ loading — dùng fallback data ngay, cập nhật khi có data thật
+  const getUserById     = (id) => users.find((u) => String(u.id) === String(id));
+  const myTasks         = tasks.filter((t) => String(t.assignee_id) === String(currentUser.id));
+  const openIssues      = qualityIssues.filter((i) => i.status === 'open').length;
   const recurringIssues = qualityIssues.filter((i) => i.recurring && i.status === 'open').length;
 
   const stats = [
-    { label: 'Dự Án Đang Chạy', value: projects.filter((p) => p.status === 'active').length,  icon: '◈', color: '#60a5fa' },
-    { label: 'Task Hôm Nay',    value: myTasks.length,                                         icon: '◎', color: '#4ade80' },
-    { label: 'Lỗi Đang Mở',    value: openIssues,                                             icon: '△', color: '#f59e0b' },
-    { label: 'Lỗi Tái Phát ⚠', value: recurringIssues,                                        icon: '⚠', color: '#ef4444' },
+    { label: 'Dự Án Đang Chạy', value: projects.filter((p) => p.status === 'active').length, icon: '◈', color: '#60a5fa' },
+    { label: 'Task Hôm Nay',    value: myTasks.length,                                        icon: '◎', color: '#4ade80' },
+    { label: 'Lỗi Đang Mở',    value: openIssues,                                            icon: '△', color: '#f59e0b' },
+    { label: 'Lỗi Tái Phát ⚠', value: recurringIssues,                                       icon: '⚠', color: '#ef4444' },
   ];
 
   const actionMap = {
