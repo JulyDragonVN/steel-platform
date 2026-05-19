@@ -1,7 +1,7 @@
 // src/components/LoginModal.jsx
 import { useState } from 'react';
 import { Avatar } from './ui';
-import { ROLE_COLORS, ROLE_LABELS } from '../data/constants';
+import { ROLE_COLORS, ROLE_LABELS, DEMO_PASSWORDS } from '../data/constants';
 
 export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = false }) {
   const [pass,  setPass]  = useState('');
@@ -14,7 +14,7 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
     setBusy(true);
     setError('');
     try {
-      await onSuccess({ user: targetUser, password: pass, email });
+      await onSuccess({ user: targetUser, password: isSupabaseMode ? pass : pass, email });
     } catch (e) {
       setError(e.message || 'Đăng nhập thất bại.');
       setShake(true);
@@ -124,6 +124,16 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
         >
           Hủy
         </button>
+
+        {/* Demo hint (chỉ hiện khi không phải Supabase mode) */}
+        {!isSupabaseMode && (
+          <div style={{ marginTop: 18, padding: '10px 12px', background: '#ffffff05', borderRadius: 8, border: '1px solid #ffffff08' }}>
+            <div style={{ fontSize: 10, color: '#334155', fontFamily: 'var(--font-mono)', marginBottom: 4 }}>DEMO — mật khẩu thử:</div>
+            <div style={{ fontSize: 10, color: '#475569', fontFamily: 'var(--font-mono)' }}>
+              {'→ '}<span style={{ color: '#60a5fa' }}>{DEMO_PASSWORDS[targetUser.id]}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
