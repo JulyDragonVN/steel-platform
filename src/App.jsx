@@ -1,11 +1,6 @@
-// src/App.jsx
-// Entry point chính — chỉ chứa routing và state cấp cao.
-// Mọi UI/logic đã được tách sang module riêng.
-
 import { useState } from 'react';
-import { Layout }    from './components/Layout';
-import { LoginGate } from './components/LoginGate';
-import { useAuth }   from './hooks/useAuth';
+import { Layout }          from './components/Layout';
+import { useAuth }         from './hooks/useAuth';
 import { useRealtimeData } from './hooks/useRealtimeData';
 
 import { Dashboard } from './modules/dashboard/Dashboard';
@@ -15,33 +10,36 @@ import { Quality }   from './modules/quality/Quality';
 import { Plugins }   from './modules/plugins/Plugins';
 import { Members }   from './modules/members/Members';
 
-import { FALLBACK_QUALITY_ISSUES } from './data/fallback';
-
 export default function App() {
   const [page, setPage] = useState('dashboard');
-  const { currentUser, loginWithEmail, loginDemo, logout, isSupabaseMode } = useAuth();
+  const { currentUser, loading, loginWithEmail, logout } = useAuth();
 
-  // recurringAlert dùng cho badge trên nav + header
-  const { data: qualityIssues } = useRealtimeData('quality_issues', FALLBACK_QUALITY_ISSUES);
-  const recurringAlert = qualityIssues.filter((i) => i.recurring && i.status === 'open').length;
+  const { data: qualityIssues } = useRealtimeData('quality_issues');
+  const recurringAlert = qualityIssues.filter(i => i.recurring && i.status === 'open').length;
 
-  // ── Handler đăng nhập (hỗ trợ cả 2 mode) ────────────────────
-  async function handleLogin({ user, password, email }) {
-    if (isSupabaseMode) {
-      await loginWithEmail(email || user.email, password);
-    } else {
-      loginDemo(user, password);
-    }
+  // Chờ kiểm tra session Supabase trước khi render
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh', background: '#060c18',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        color: '#475569', fontFamily: 'monospace', fontSize: 13,
+        flexDirection: 'column', gap: 16,
+      }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: '50%',
+          border: '3px solid #1d4ed8', borderTopColor: '#60a5fa',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <span>Đang khởi động...</span>
+      </div>
+    );
   }
 
-  // ── Render page content ──────────────────────────────────────
   function renderPage() {
-    if (page === 'dashboard') {
-      return <Dashboard currentUser={currentUser || { id: '0', name: 'Guest', role: 'dev', avatar: 'GS', dept: '', online: false }} />;
-    }
-    if (!currentUser) {
-      return <LoginGate onSelectUser={(u) => {/* Layout's LoginModal handles this */}} />;
-    }
+    if (page === 'dashboard') return <Dashboard currentUser={currentUser} />;
+    if (!currentUser) return null;
     switch (page) {
       case 'projects': return <Projects  currentUser={currentUser} />;
       case 'docs':     return <Documents currentUser={currentUser} />;
@@ -57,9 +55,8 @@ export default function App() {
       page={page}
       setPage={setPage}
       currentUser={currentUser}
-      onLogin={handleLogin}
+      onLogin={({ email, password }) => loginWithEmail(email, password)}
       onLogout={logout}
-      isSupabaseMode={isSupabaseMode}
       recurringAlert={recurringAlert}
     >
       {renderPage()}

@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Badge, Button, FilterBar, LoadingSpinner } from '../../components/ui';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
-import { FALLBACK_DOCS, FALLBACK_PROJECTS } from '../../data/fallback';
 
 const CAT_OPTIONS = [
   ['all',      'Tất cả'],
@@ -25,8 +24,8 @@ const CAT_LABEL = Object.fromEntries(CAT_OPTIONS);
 export function Documents({ currentUser }) {
   const [filter, setFilter] = useState('all');
 
-  const { data: docs,     loading: ld } = useRealtimeData('documents', FALLBACK_DOCS);
-  const { data: projects }              = useRealtimeData('projects',  FALLBACK_PROJECTS);
+  const { data: docs,     loading: ld } = useRealtimeData('documents');
+  const { data: projects }              = useRealtimeData('projects');
 
   if (ld) return <LoadingSpinner />;
 

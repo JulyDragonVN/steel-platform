@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Avatar, Badge, Button, FilterBar, LoadingSpinner } from '../../components/ui';
 import { PRIORITY_COLORS } from '../../data/constants';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
-import { FALLBACK_QUALITY_ISSUES, FALLBACK_PROJECTS, FALLBACK_USERS } from '../../data/fallback';
 
 const FILTER_OPTIONS = [
   ['all',       'Tất cả'],
@@ -20,9 +19,9 @@ const TYPE_ICON    = { error: '⚡', improvement: '✦' };
 export function Quality({ currentUser }) {
   const [filter, setFilter] = useState('all');
 
-  const { data: issues,   loading: li } = useRealtimeData('quality_issues', FALLBACK_QUALITY_ISSUES);
-  const { data: projects }              = useRealtimeData('projects',        FALLBACK_PROJECTS);
-  const { data: users }                 = useRealtimeData('users',           FALLBACK_USERS);
+  const { data: issues,   loading: li } = useRealtimeData('quality_issues');
+  const { data: projects }              = useRealtimeData('projects');
+  const { data: users }                 = useRealtimeData('users');
 
   if (li) return <LoadingSpinner />;
 

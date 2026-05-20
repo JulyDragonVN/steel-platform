@@ -34,13 +34,3 @@ export const NAV_ITEMS = [
   { id: 'plugins',   label: 'Kho Plugin',  icon: '⬡', public: false },
   { id: 'members',   label: 'Thành Viên',  icon: '◉', public: false },
 ];
-
-// Demo passwords — chỉ dùng khi Supabase Auth chưa được bật
-export const DEMO_PASSWORDS = {
-  '1': 'admin123',
-  '2': 'khoa123',
-  '3': 'hoa123',
-  '4': 'long123',
-  '5': 'mai123',
-  '6': 'tu123',
-};
