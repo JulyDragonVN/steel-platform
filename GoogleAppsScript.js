@@ -1,86 +1,45 @@
 // ============================================================
 // STEELTEAM — Google Apps Script
-// Hướng dẫn deploy:
+// Hướng dẫn:
 // 1. Mở Google Sheets → Extensions → Apps Script
-// 2. Xóa code cũ, paste toàn bộ file này vào
+// 2. Paste toàn bộ code này vào, xóa code cũ
 // 3. Deploy → New deployment → Web app
-//    - Execute as: Me
-//    - Who has access: Anyone
-// 4. Copy URL → dán vào VITE_SHEETS_API_URL trong Vercel
+//    Execute as: Me | Who has access: Anyone
+// 4. Copy URL → thêm vào Vercel: VITE_SHEETS_API_URL
 // ============================================================
 
-const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
-
-// Tên các sheet tab
-const SHEETS = {
-  users:          'users',
-  projects:       'projects',
-  tasks:          'tasks',
-  documents:      'documents',
-  quality_issues: 'quality_issues',
-  plugins:        'plugins',
-  activity:       'activity',
-};
-
-// ── GET: đọc dữ liệu ─────────────────────────────────────────
 function doGet(e) {
   try {
     const table = e.parameter.table;
-    if (!table || !SHEETS[table]) {
-      return jsonResponse({ error: 'Invalid table: ' + table });
-    }
-    const rows = getRows(table);
-    return jsonResponse({ data: rows });
-  } catch (err) {
-    return jsonResponse({ error: err.message });
-  }
+    if (!table) return json({ error: 'Missing table' });
+    return json({ data: getRows(table) });
+  } catch(err) { return json({ error: err.message }); }
 }
 
-// ── POST: ghi dữ liệu ────────────────────────────────────────
 function doPost(e) {
   try {
     const body   = JSON.parse(e.postData.contents);
     const table  = body.table;
-    const action = body.action; // insert | update | delete
-
-    if (!table || !SHEETS[table]) {
-      return jsonResponse({ error: 'Invalid table' });
-    }
-
-    if (action === 'insert') {
-      const newRow = insertRow(table, body.row);
-      return jsonResponse({ data: newRow });
-    }
-    if (action === 'update') {
-      updateRow(table, body.id, body.changes);
-      return jsonResponse({ success: true });
-    }
-    if (action === 'delete') {
-      deleteRow(table, body.id);
-      return jsonResponse({ success: true });
-    }
-
-    return jsonResponse({ error: 'Unknown action' });
-  } catch (err) {
-    return jsonResponse({ error: err.message });
-  }
+    const action = body.action;
+    if (!table) return json({ error: 'Missing table' });
+    if (action === 'insert') return json({ data: insertRow(table, body.row) });
+    if (action === 'update') { updateRow(table, body.id, body.changes); return json({ success: true }); }
+    if (action === 'delete') { deleteRow(table, body.id); return json({ success: true }); }
+    return json({ error: 'Unknown action' });
+  } catch(err) { return json({ error: err.message }); }
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-function getSheet(table) {
-  const ss    = SpreadsheetApp.openById(SHEET_ID);
-  let   sheet = ss.getSheetByName(table);
-  if (!sheet) sheet = ss.insertSheet(table);
-  return sheet;
+function getSheet(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return ss.getSheetByName(name) || ss.insertSheet(name);
 }
 
 function getRows(table) {
-  const sheet  = getSheet(table);
-  const values = sheet.getDataRange().getValues();
-  if (values.length < 2) return [];
-
-  const headers = values[0];
-  return values.slice(1).map(row => {
+  const sheet = getSheet(table);
+  const vals  = sheet.getDataRange().getValues();
+  if (vals.length < 2) return [];
+  const headers = vals[0];
+  return vals.slice(1).map(row => {
     const obj = {};
     headers.forEach((h, i) => { obj[h] = row[i]; });
     return obj;
@@ -89,32 +48,24 @@ function getRows(table) {
 
 function insertRow(table, row) {
   const sheet   = getSheet(table);
-  const values  = sheet.getDataRange().getValues();
-  const headers = values.length > 0 ? values[0] : Object.keys(row);
-
-  // Tạo header nếu sheet trống
-  if (values.length === 0) {
-    const allKeys = ['id', ...Object.keys(row).filter(k => k !== 'id')];
-    sheet.appendRow(allKeys);
+  const vals    = sheet.getDataRange().getValues();
+  var   headers = vals.length > 0 ? vals[0] : null;
+  if (!headers || vals.length === 0) {
+    headers = ['id', ...Object.keys(row).filter(k => k !== 'id'), 'created_at'];
+    sheet.appendRow(headers);
   }
-
-  // Tạo ID mới
-  const newId = Date.now().toString();
-  const newRow = { id: newId, ...row, created_at: new Date().toISOString() };
-
-  const rowValues = headers.map(h => newRow[h] !== undefined ? newRow[h] : '');
-  sheet.appendRow(rowValues);
+  const newRow = { id: Date.now().toString(), ...row, created_at: new Date().toISOString() };
+  sheet.appendRow(headers.map(h => newRow[h] !== undefined ? newRow[h] : ''));
   return newRow;
 }
 
 function updateRow(table, id, changes) {
   const sheet   = getSheet(table);
-  const values  = sheet.getDataRange().getValues();
-  const headers = values[0];
+  const vals    = sheet.getDataRange().getValues();
+  const headers = vals[0];
   const idCol   = headers.indexOf('id');
-
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][idCol]) === String(id)) {
+  for (var i = 1; i < vals.length; i++) {
+    if (String(vals[i][idCol]) === String(id)) {
       Object.entries(changes).forEach(([key, val]) => {
         const col = headers.indexOf(key);
         if (col !== -1) sheet.getRange(i + 1, col + 1).setValue(val);
@@ -126,20 +77,14 @@ function updateRow(table, id, changes) {
 
 function deleteRow(table, id) {
   const sheet   = getSheet(table);
-  const values  = sheet.getDataRange().getValues();
-  const headers = values[0];
+  const vals    = sheet.getDataRange().getValues();
+  const headers = vals[0];
   const idCol   = headers.indexOf('id');
-
-  for (let i = values.length - 1; i >= 1; i--) {
-    if (String(values[i][idCol]) === String(id)) {
-      sheet.deleteRow(i + 1);
-      return;
-    }
+  for (var i = vals.length - 1; i >= 1; i--) {
+    if (String(vals[i][idCol]) === String(id)) { sheet.deleteRow(i + 1); return; }
   }
 }
 
-function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+function json(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
