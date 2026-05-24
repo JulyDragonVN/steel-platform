@@ -1,18 +1,17 @@
 import { Avatar, ProgressBar, Badge, SectionHeader, Card } from '../../components/ui';
 import { ROLE_COLORS, STATUS_COLORS, PRIORITY_COLORS } from '../../data/constants';
-import { useRealtimeData } from '../../hooks/useRealtimeData';
+import { useSheetsData } from '../../hooks/useSheetsData';
+import { FALLBACK_PROJECTS, FALLBACK_TASKS, FALLBACK_QUALITY_ISSUES, FALLBACK_ACTIVITY, FALLBACK_USERS } from '../../data/fallback';
 
 export function Dashboard({ currentUser }) {
-  const { data: projects,      loading: lp } = useRealtimeData('projects');
-  const { data: tasks,         loading: lt } = useRealtimeData('tasks');
-  const { data: qualityIssues, loading: lq } = useRealtimeData('quality_issues');
-  const { data: activity,      loading: la } = useRealtimeData('activity');
-  const { data: users,         loading: lu } = useRealtimeData('users');
-
-  const loading = lp || lt || lq || la || lu;
+  const { data: projects      } = useSheetsData('projects',       FALLBACK_PROJECTS);
+  const { data: tasks         } = useSheetsData('tasks',          FALLBACK_TASKS);
+  const { data: qualityIssues } = useSheetsData('quality_issues', FALLBACK_QUALITY_ISSUES);
+  const { data: activity      } = useSheetsData('activity',       FALLBACK_ACTIVITY);
+  const { data: users         } = useSheetsData('users',          FALLBACK_USERS);
 
   const getUserById     = (id) => users.find(u => String(u.id) === String(id));
-  const myTasks         = currentUser ? tasks.filter(t => String(t.assignee_id) === String(currentUser.id)) : [];
+  const myTasks         = tasks.filter(t => String(t.assignee_id) === String(currentUser.id));
   const openIssues      = qualityIssues.filter(i => i.status === 'open').length;
   const recurringIssues = qualityIssues.filter(i => i.recurring && i.status === 'open').length;
 
@@ -20,25 +19,15 @@ export function Dashboard({ currentUser }) {
     { label: 'Dự Án Đang Chạy', value: projects.filter(p => p.status === 'active').length, icon: '◈', color: '#60a5fa' },
     { label: 'Task Hôm Nay',    value: myTasks.length,                                      icon: '◎', color: '#4ade80' },
     { label: 'Lỗi Đang Mở',    value: openIssues,                                          icon: '△', color: '#f59e0b' },
-    { label: 'Lỗi Tái Phát ⚠', value: recurringIssues,                                     icon: '⚠', color: '#ef4444' },
+    { label: 'Lỗi Tái Phát',   value: recurringIssues,                                     icon: '⚠', color: '#ef4444' },
   ];
 
   const actionMap = { 'upload file':'tải lên','complete task':'hoàn thành','report issue':'báo lỗi','approve task':'duyệt','create task':'tạo task' };
 
-  if (loading) {
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-        {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ background:'#ffffff06', border:'1px solid #ffffff10', borderRadius:12, padding:'20px 24px', height: 90, animation: 'pulse 1.5s infinite' }} />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16 }}>
-        {stats.map((s, i) => (
+    <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }}>
+        {stats.map((s,i) => (
           <div key={i} style={{ background:'#ffffff06', border:'1px solid #ffffff10', borderRadius:12, padding:'20px 24px', borderLeft:`3px solid ${s.color}` }}>
             <div style={{ fontSize:24, marginBottom:8 }}>{s.icon}</div>
             <div style={{ fontSize:32, fontWeight:800, color:s.color, fontFamily:'var(--font-mono)' }}>{s.value}</div>
@@ -53,17 +42,14 @@ export function Dashboard({ currentUser }) {
           <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
             {projects.filter(p => p.status === 'active').map(p => (
               <div key={p.id}>
-                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, alignItems:'center' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
                   <span style={{ fontSize:13, fontWeight:600 }}>{p.name}</span>
                   <span style={{ fontSize:12, color:'#60a5fa', fontFamily:'var(--font-mono)' }}>{p.progress}%</span>
                 </div>
-                <ProgressBar value={p.progress} color={p.progress > 80 ? '#4ade80' : '#60a5fa'} height={6} />
+                <ProgressBar value={Number(p.progress)} color={p.progress > 80 ? '#4ade80' : '#60a5fa'} height={6} />
                 <div style={{ fontSize:11, color:'#64748b', marginTop:4 }}>{p.phase}</div>
               </div>
             ))}
-            {projects.filter(p => p.status === 'active').length === 0 && (
-              <div style={{ color:'#475569', fontSize:13 }}>Không có dự án đang chạy.</div>
-            )}
           </div>
         </Card>
 
@@ -85,32 +71,27 @@ export function Dashboard({ currentUser }) {
                 </div>
               );
             })}
-            {activity.length === 0 && (
-              <div style={{ color:'#475569', fontSize:13 }}>Chưa có hoạt động nào.</div>
-            )}
           </div>
         </Card>
       </div>
 
-      {currentUser && (
-        <Card>
-          <SectionHeader>TASK CỦA TÔI</SectionHeader>
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {myTasks.length ? myTasks.map(t => (
-              <div key={t.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#ffffff04', borderRadius:8, border:'1px solid #ffffff08' }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:PRIORITY_COLORS[t.priority], flexShrink:0 }} />
-                <span style={{ flex:1, fontSize:13 }}>{t.title}</span>
-                <Badge color={STATUS_COLORS[t.status]}>
-                  {t.status==='inprogress'?'Đang làm':t.status==='review'?'Đang duyệt':'Chờ'}
-                </Badge>
-                <span style={{ fontSize:11, color:'#64748b', fontFamily:'var(--font-mono)' }}>{t.due}</span>
-              </div>
-            )) : (
-              <div style={{ color:'#475569', fontSize:13, padding:'12px 0' }}>Không có task nào được giao.</div>
-            )}
-          </div>
-        </Card>
-      )}
+      <Card>
+        <SectionHeader>TASK CỦA TÔI</SectionHeader>
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {myTasks.length ? myTasks.map(t => (
+            <div key={t.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', background:'#ffffff04', borderRadius:8, border:'1px solid #ffffff08' }}>
+              <div style={{ width:8, height:8, borderRadius:'50%', background:PRIORITY_COLORS[t.priority], flexShrink:0 }} />
+              <span style={{ flex:1, fontSize:13 }}>{t.title}</span>
+              <Badge color={STATUS_COLORS[t.status]}>
+                {t.status==='inprogress'?'Đang làm':t.status==='review'?'Đang duyệt':'Chờ'}
+              </Badge>
+              <span style={{ fontSize:11, color:'#64748b', fontFamily:'var(--font-mono)' }}>{t.due}</span>
+            </div>
+          )) : (
+            <div style={{ color:'#475569', fontSize:13, padding:'12px 0' }}>Không có task nào được giao.</div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }

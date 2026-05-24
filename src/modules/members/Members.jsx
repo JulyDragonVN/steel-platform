@@ -1,7 +1,8 @@
 // src/modules/members/Members.jsx
 import { Avatar, Badge, Button, LoadingSpinner } from '../../components/ui';
 import { ROLE_COLORS, ROLE_LABELS } from '../../data/constants';
-import { useRealtimeData } from '../../hooks/useRealtimeData';
+import { useSheetsData } from '../../hooks/useSheetsData';
+import { FALLBACK_USERS } from '../../data/fallback';
 
 const PERMISSION_MATRIX = {
   'Quản lý user':     { admin: true,  lead: false, dev: false },
@@ -20,7 +21,7 @@ const PERMISSION_MATRIX = {
 };
 
 export function Members({ currentUser }) {
-  const { data: users, loading } = useRealtimeData('users');
+  const { data: users, loading } = useSheetsData('users', FALLBACK_USERS);
 
   if (loading) return <LoadingSpinner />;
 

@@ -1,49 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+// src/hooks/useAuth.js — Demo login, không cần Supabase
+import { useState, useCallback } from 'react';
+import { DEMO_PASSWORDS } from '../data/constants';
 
 export function useAuth() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading]         = useState(true);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        setCurrentUser(profile);
-      }
-      setLoading(false);
-    }).catch(() => setLoading(false));
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setCurrentUser(profile);
-        } else {
-          setCurrentUser(null);
-        }
-      }
-    );
-    return () => subscription.unsubscribe();
+  const loginDemo = useCallback((targetUser, password) => {
+    if (password !== DEMO_PASSWORDS[targetUser.id]) {
+      throw new Error('Mật khẩu không đúng. Vui lòng thử lại.');
+    }
+    setCurrentUser(targetUser);
   }, []);
 
-  async function fetchProfile(userId) {
-    try {
-      const { data } = await supabase.from('users').select('*').eq('id', userId).single();
-      return data;
-    } catch (_) { return null; }
-  }
+  const logout = useCallback(() => setCurrentUser(null), []);
 
-  const loginWithEmail = useCallback(async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
-    return data;
-  }, []);
-
-  const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setCurrentUser(null);
-  }, []);
-
-  return { currentUser, loading, loginWithEmail, logout };
+  return {
+    currentUser,
+    loading: false,
+    loginDemo,
+    logout,
+    isSupabaseMode: false,
+  };
 }

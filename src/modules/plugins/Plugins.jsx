@@ -1,6 +1,7 @@
 // src/modules/plugins/Plugins.jsx
 import { Badge, Button, LoadingSpinner } from '../../components/ui';
-import { useRealtimeData } from '../../hooks/useRealtimeData';
+import { useSheetsData } from '../../hooks/useSheetsData';
+import { FALLBACK_PLUGINS } from '../../data/fallback';
 
 const CAT_COLORS = {
   devops:       '#60a5fa',
@@ -11,7 +12,7 @@ const CAT_COLORS = {
 };
 
 export function Plugins({ currentUser }) {
-  const { data: plugins, loading, update } = useRealtimeData('plugins');
+  const { data: plugins, loading, update } = useSheetsData('plugins', FALLBACK_PLUGINS);
 
   if (loading) return <LoadingSpinner />;
 

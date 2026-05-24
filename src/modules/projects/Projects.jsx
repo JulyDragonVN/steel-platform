@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Avatar, Badge, ProgressBar, Button, Card, SectionHeader, LoadingSpinner } from '../../components/ui';
 import { ROLE_COLORS, ROLE_LABELS, STATUS_COLORS, PRIORITY_COLORS } from '../../data/constants';
-import { useRealtimeData } from '../../hooks/useRealtimeData';
+import { useSheetsData } from '../../hooks/useSheetsData';
+import { FALLBACK_PROJECTS, FALLBACK_TASKS, FALLBACK_USERS } from '../../data/fallback';
 
 const STATUS_MAP = {
   active:    ['#4ade80', 'Đang chạy'],
@@ -12,11 +13,11 @@ const STATUS_MAP = {
 
 export function Projects({ currentUser }) {
   const [selected, setSelected] = useState(null);
-  const { data: projects, loading: lp } = useRealtimeData('projects');
-  const { data: tasks,    loading: lt } = useRealtimeData('tasks');
-  const { data: users }                 = useRealtimeData('users');
+  const { data: projects, //loading } = useSheetsData('projects', FALLBACK_PROJECTS);
+  const { data: tasks,    //loading } = useSheetsData('tasks',    FALLBACK_TASKS);
+  const { data: users }                 = useSheetsData('users',    FALLBACK_USERS);
 
-  if (lp || lt) return <LoadingSpinner />;
+  ;
 
   const getUserById    = (id) => users.find((u) => String(u.id) === String(id));
   const getProjectById = (id) => projects.find((p) => String(p.id) === String(id));
