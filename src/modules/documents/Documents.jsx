@@ -29,7 +29,23 @@ export function Documents() {
             </div>
             <Badge color="#60a5fa">{(d.type||'').toUpperCase()}</Badge>
             <Badge color={CAT_COLORS[d.category]||'#60a5fa'}>{d.category}</Badge>
-            <Button variant="ghost" size="sm">⬇ Tải</Button>
+           <button
+  onClick={() => {
+    const url = d.file_url || d.url || '';
+    if (url && url.startsWith('http')) {
+      window.open(url, '_blank');
+    } else {
+      alert('Tài liệu này chưa có link tải. Vui lòng cập nhật cột file_url trong Google Sheets.');
+    }
+  }}
+  style={{
+    padding: '5px 12px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+    background: 'none', border: '1px solid #ffffff20', color: '#94a3b8',
+    cursor: 'pointer',
+  }}
+>
+  ⬇ Tải
+</button>
           </div>
         ))}
       </div>
