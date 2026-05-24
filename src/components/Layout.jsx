@@ -4,7 +4,10 @@ import { Avatar, Badge } from './ui';
 import { LoginModal } from './LoginModal';
 import { ROLE_COLORS, ROLE_LABELS, NAV_ITEMS } from '../data/constants';
 import { useRealtimeData } from '../hooks/useRealtimeData';
+<<<<<<< HEAD
 import { isSupabaseMode } from '../lib/supabase';
+=======
+>>>>>>> 20d39a1046e1bac1f2bec6617a7382cae8ec7832
 
 export function Layout({ children, page, setPage, currentUser, onLogin, onLogout, recurringAlert = 0 }) {
   const [showUserPicker, setShowUserPicker] = useState(false);

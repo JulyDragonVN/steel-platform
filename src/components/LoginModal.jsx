@@ -3,18 +3,24 @@ import { useState } from 'react';
 import { Avatar } from './ui';
 import { ROLE_COLORS, ROLE_LABELS } from '../data/constants';
 
-export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = false }) {
-  const [pass,  setPass]  = useState('');
+export function LoginModal({ targetUser, onSuccess, onClose }) {
   const [email, setEmail] = useState('');
+  const [pass,  setPass]  = useState('');
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [busy,  setBusy]  = useState(false);
 
   async function handleLogin() {
+    if (!email.trim()) { setError('Vui lòng nhập email.'); return; }
+    if (!pass.trim())  { setError('Vui lòng nhập mật khẩu.'); return; }
     setBusy(true);
     setError('');
     try {
+<<<<<<< HEAD
       await onSuccess({ user: targetUser, password: pass, email });
+=======
+      await onSuccess({ user: targetUser, email: email.trim(), password: pass });
+>>>>>>> 20d39a1046e1bac1f2bec6617a7382cae8ec7832
     } catch (e) {
       setError(e.message || 'Đăng nhập thất bại.');
       setShake(true);
@@ -46,6 +52,7 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
         <style>{`
           @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
           @keyframes shake   { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} 80%{transform:translateX(-4px)} }
+          .login-input:focus { border-color: #3b82f6 !important; outline: none; }
         `}</style>
 
         {/* Header */}
@@ -63,38 +70,37 @@ export function LoginModal({ targetUser, onSuccess, onClose, isSupabaseMode = fa
           </div>
           <div style={{ fontWeight: 800, fontSize: 16 }}>{targetUser.name}</div>
           <div style={{ fontSize: 12, color: ROLE_COLORS[targetUser.role], fontFamily: 'var(--font-mono)', marginTop: 4 }}>
-            {ROLE_LABELS[targetUser.role]} · {targetUser.dept}
+            {ROLE_LABELS[targetUser.role]}{targetUser.dept ? ` · ${targetUser.dept}` : ''}
           </div>
         </div>
 
         <div style={{ borderTop: '1px solid #ffffff08', marginBottom: 22 }} />
 
-        {/* Email (chỉ hiện khi Supabase mode) */}
-        {isSupabaseMode && (
-          <>
-            <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Email</div>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@domain.com"
-              style={inputStyle(false)}
-            />
-          </>
-        )}
-
-        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, marginTop: isSupabaseMode ? 14 : 0 }}>
-          Mật khẩu
-        </div>
+        {/* Email */}
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>Email</div>
         <input
           autoFocus
+          className="login-input"
+          type="email"
+          value={email}
+          onChange={(e) => { setEmail(e.target.value); setError(''); }}
+          onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+          placeholder="email@domain.com"
+          style={inputStyle(!!error && !email)}
+        />
+
+        {/* Password */}
+        <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8, marginTop: 14 }}>Mật khẩu</div>
+        <input
+          className="login-input"
           type="password"
           value={pass}
           onChange={(e) => { setPass(e.target.value); setError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           placeholder="Nhập mật khẩu..."
-          style={inputStyle(!!error)}
+          style={inputStyle(!!error && !pass)}
         />
+
         {error && (
           <div style={{ fontSize: 11, color: '#ef4444', marginTop: 8, display: 'flex', gap: 5, alignItems: 'center' }}>
             <span>⚠</span>{error}
