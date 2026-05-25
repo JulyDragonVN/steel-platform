@@ -11,10 +11,33 @@ const PERMS = {
   'Tạo task':        {admin:true,  lead:true,  dev:false},
   'Nhận task':       {admin:true,  lead:true,  dev:true },
   'Upload tài liệu': {admin:true,  lead:true,  dev:true },
-  'Báo lỗi':        {admin:true,  lead:true,  dev:true },
+  'Báo lỗi':         {admin:true,  lead:true,  dev:true },
   'Quản lý plugin':  {admin:true,  lead:true,  dev:false},
   'Xuất báo cáo':    {admin:true,  lead:true,  dev:false},
 };
+
+function TeamsButton({ email }) {
+  if (!email) return null;
+  return (
+    <a
+      href={`https://teams.microsoft.com/l/chat/0/0?users=${email}`}
+      target="_blank"
+      rel="noreferrer"
+      title={`Chat với ${email}`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        padding: '4px 10px', borderRadius: 6, fontSize: 11,
+        fontWeight: 600, textDecoration: 'none',
+        background: '#464eb822', border: '1px solid #464eb844',
+        color: '#7b83eb', whiteSpace: 'nowrap', flexShrink: 0,
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = '#464eb844'}
+      onMouseLeave={e => e.currentTarget.style.background = '#464eb822'}
+    >
+      💬 Chat
+    </a>
+  );
+}
 
 export function Members({ currentUser }) {
   const { data: users } = useData('users', FALLBACK_USERS);
@@ -32,6 +55,7 @@ export function Members({ currentUser }) {
             </div>
             <Badge color={ROLE_COLORS[u.role]}>{ROLE_LABELS[u.role]}</Badge>
             <div style={{ width:8, height:8, borderRadius:'50%', background:u.online?'#4ade80':'#475569' }} />
+            <TeamsButton email={u.teams_email} />
           </div>
         ))}
       </div>
@@ -44,23 +68,32 @@ export function Members({ currentUser }) {
         <div style={{ fontSize:20, fontWeight:800 }}>Thành Viên & Quyền</div>
         <Button>+ Thêm thành viên</Button>
       </div>
+
+      {/* Grid thành viên */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:28 }}>
         {users.map(u => (
           <div key={u.id} style={{ background:'#ffffff06', border:'1px solid #ffffff10', borderRadius:10, padding:'14px 16px' }}>
             <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:10 }}>
               <Avatar user={u} size={36} />
-              <div>
+              <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:700, fontSize:13 }}>{u.name}</div>
                 <div style={{ fontSize:11, color:'#64748b' }}>{u.dept}</div>
               </div>
             </div>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: u.teams_email ? 10 : 0 }}>
               <Badge color={ROLE_COLORS[u.role]}>{ROLE_LABELS[u.role]}</Badge>
               <span style={{ fontSize:11, color:u.online?'#4ade80':'#475569' }}>{u.online?'● Online':'○ Offline'}</span>
             </div>
+            {u.teams_email && (
+              <div style={{ marginTop:8, borderTop:'1px solid #ffffff08', paddingTop:10 }}>
+                <TeamsButton email={u.teams_email} />
+              </div>
+            )}
           </div>
         ))}
       </div>
+
+      {/* Ma trận phân quyền */}
       <div style={{ background:'#ffffff06', border:'1px solid #ffffff10', borderRadius:12, overflow:'hidden' }}>
         <div style={{ padding:'14px 20px', borderBottom:'1px solid #ffffff10', fontWeight:700, fontSize:13, letterSpacing:'0.08em', color:'#94a3b8' }}>MA TRẬN PHÂN QUYỀN</div>
         <table style={{ width:'100%', borderCollapse:'collapse' }}>
